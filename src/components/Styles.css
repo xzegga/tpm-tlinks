@@ -1,0 +1,4 @@
+.chakra-menu__group {
+    max-height: 300px;
+    overflow-y: scroll;
+}

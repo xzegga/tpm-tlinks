@@ -1,0 +1,25 @@
+.blured {
+    filter: blur(0.3rem);
+}
+
+.white-icon path {
+    stroke: white;
+}
+.border-top {
+    border-bottom: 1px solid #cde2ff66;
+    margin-bottom: -9px !important;
+    height: 1px;
+    width: 100%;
+}
+.isUrgent {
+    max-width: 26px;
+    max-height: 26px;
+    margin-left: 5px;    
+}
+.isUrgent.mb-10 {
+    margin-bottom: 10px;
+}
+
+.isUrgent svg {
+    max-width: 26px;
+}
