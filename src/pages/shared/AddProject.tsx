@@ -103,7 +103,7 @@ const AddProject: React.FC = () => {
     return (
         <>
             {currentUser && (
-                <Container maxW="full" mt={0} overflow="hidden" width={'100%'}>
+                <Container maxW="full" mt={0} w={'container.lg'} overflow="hidden" width={'100%'}>
                     <Flex mb="10">
                         <Box>
                             <Breadcrumb separator="/">
@@ -120,13 +120,13 @@ const AddProject: React.FC = () => {
                     </Flex>
                     <Heading size="md">Add Project Request</Heading>
                     <Box position={'relative'} width={'100%'}>
-                        <Flex border="1px" borderColor="gray.200" borderRadius="lg" variant="outline" mt="10" className={saving ? 'blured' : ''} position={'relative'}>
-                            <Box borderRadius="lg" bg="blue.700" color="white">
+                        <Flex border="1px" borderColor="gray.200" borderRadius="lg" mt="10" className={saving ? 'blured' : ''} position={'relative'}>
+                            <Box borderRadius="lg" bg="blue.700" color="white" flex={1}>
                                 <Box p={4}>
                                     <Wrap>
                                         <WrapItem>
                                             <Box borderRadius="lg">
-                                                <Box m={8} color="white">
+                                                <Box m={4} color="white">
                                                     <VStack spacing={5}>
                                                         <FormControl id="language_requested">
                                                             <FormLabel>Request Number</FormLabel>
@@ -157,17 +157,19 @@ const AddProject: React.FC = () => {
                                                             </InputGroup>
                                                         </FormControl>
                                                         <FormControl id="services">
-                                                            <Stack spacing={5} direction="row">
-                                                                <Checkbox required name="isTranslation" id="isTranslation" checked={project.isTranslation} onChange={handleCheckbox} defaultIsChecked>
+                                                            <Stack spacing={5} direction="row" wrap={'wrap'}>
+                                                                <Checkbox required name="isTranslation" id="isTranslation" 
+                                                                    checked={project.isTranslation} onChange={handleCheckbox}>
                                                                     Translation
                                                                 </Checkbox>
                                                                 <Checkbox name="isEditing" id="isEditing" checked={project.isEditing} onChange={handleCheckbox}>
                                                                     Editing
                                                                 </Checkbox>
+                                                                <Checkbox name="isCertificate" id="isCertificate" checked={project.isCertificate} onChange={handleCheckbox}>
+                                                                    Requires certification
+                                                                </Checkbox>
                                                             </Stack>
-                                                            <Checkbox name="isCertificate" id="isCertificate" checked={project.isCertificate} onChange={handleCheckbox}>
-                                                                Requires certification
-                                                            </Checkbox>
+                                                            
                                                         </FormControl>
                                                         <div className='border-top'></div>
                                                         <FormControl id="urgent">
@@ -219,7 +221,7 @@ const AddProject: React.FC = () => {
                                 </Box>
                             </Box>
 
-                            <Flex flexDirection={'column'} justifyContent={'center'} minH={'100%'} cursor={'pointer'} flex={1} m="5">
+                            <Flex flexDirection={'column'} justifyContent={'center'} minH={'100%'} cursor={'pointer'} flex={2} m="5">
                                 <DropZone setFileList={setFiles} targetLanguage={project.targetLanguage} />
                             </Flex>
                         </Flex>

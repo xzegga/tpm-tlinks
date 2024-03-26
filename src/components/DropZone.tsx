@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { shortenFileName } from '../utils/helpers';
 import { languageCodes } from '../utils/languageCodes';
-import { GroupBase, Select } from "chakra-react-select";
+import { Select } from "chakra-react-select";
 import './Styles.css';
 import Flag from './Flag';
 import { Doc } from '../models/document';
@@ -43,18 +43,18 @@ const rejectStyle = {
 };
 
 const DropZone: React.FC<DropZoneProps> = ({ setFileList, targetLanguage = 'Spanish' }) => {
-    const [files, setFiles] = useState<File[]>([]);
+    // const [files, setFiles] = useState<File[]>([]);
     const [selectedFiles, setSelectedFile] = useState<Doc[]>([]);
     const [index, setIndex] = useState<number>();
     const [target, setTarget] = useState<string[]>([]);
     const { isOpen, onOpen, onClose } = useDisclosure()
-
     const {
         getRootProps,
         getInputProps,
         isFocused,
         isDragAccept,
-        isDragReject
+        isDragReject,
+        open
     } = useDropzone({
         onDrop: acceptedFiles => {
             setSelectedFile([
@@ -66,6 +66,10 @@ const DropZone: React.FC<DropZoneProps> = ({ setFileList, targetLanguage = 'Span
         }
     });
 
+    const openFileWindows = ()=>{
+        console.log('open')
+        open();
+    }
     const openModal = (file: File) => {
         const idx = selectedFiles.findIndex(f => f.file === file);
         setIndex(idx);
@@ -91,7 +95,7 @@ const DropZone: React.FC<DropZoneProps> = ({ setFileList, targetLanguage = 'Span
         setSelectedFile(selectedFiles.filter(f => f.file !== file));
     }
 
-    const filesList = selectedFiles.map((doc: Doc, i: number) => {
+    const filesList = selectedFiles.map((doc: Doc) => {
         const { file } = doc;
         return (
             <ListItem key={file.name}>
@@ -141,7 +145,7 @@ const DropZone: React.FC<DropZoneProps> = ({ setFileList, targetLanguage = 'Span
                     <input {...getInputProps()} />
                     <Flex direction={'column'} alignItems={'center'}>
                         <Text mb={3} colorScheme={'blue.900'} fontWeight={'bold'}>Drag 'n' drop some files here, or click to select files</Text>
-                        <Button leftIcon={<AiOutlineCloudUpload />} >Upload Files</Button>
+                        <Button leftIcon={<AiOutlineCloudUpload />} onClick={openFileWindows}>Upload Files</Button>
                     </Flex>
                 </Box>
                 <Box>

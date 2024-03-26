@@ -124,3 +124,21 @@ export const updateComments = async (projectId: string, newComments: string) => 
         console.error('Error updating comments:', error);
     }
 };
+
+export const updateAmount = async (projectId: string, billed: number) => {
+    try {
+        const projectRef = doc(db, 'projects', projectId);
+        await updateDoc(projectRef, { billed });
+    } catch (error) {
+        console.error('Error updating amount billed:', error);
+    }
+};
+
+export const updateWordCount = async (projectId: string, wordCount: number) => {
+    try {
+        const projectRef = doc(db, 'projects', projectId);
+        await updateDoc(projectRef, { wordCount });
+    } catch (error) {
+        console.error('Error updating amount billed:', error);
+    }
+};

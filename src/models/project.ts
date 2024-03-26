@@ -16,6 +16,8 @@ export interface Project {
     documents: Document[];
     isUrgent: boolean;
     comments?: string;
+    wordCount?: number;
+    billed?: number;
 }
 
 export interface ProjectObject {

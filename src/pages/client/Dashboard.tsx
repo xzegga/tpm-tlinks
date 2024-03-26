@@ -16,58 +16,60 @@ import {
     Button,
     FormControl,
     FormLabel,
-    Select
+    Select,
+    Input,
+    HStack,
+    Tag,
+    TagLabel,
+    Text
 } from '@chakra-ui/react';
-import { query, collection, onSnapshot, limit, DocumentData, QueryDocumentSnapshot, startAfter, orderBy, where, Timestamp } from 'firebase/firestore';
-import React, { useEffect } from 'react';
+import { query, collection, onSnapshot, limit, DocumentData, QueryDocumentSnapshot, startAfter, orderBy, where, Timestamp, QueryFieldFilterConstraint } from 'firebase/firestore';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavLnk from '../../components/NavLnk';
 import ProjectListTable from '../../components/tables/ProjectListTable';
 import { useAuth } from '../../context/AuthContext';
 
 import { db } from '../../utils/init-firebase';
-import { allStatuses, statuses, monthNames } from '../../utils/value-objects';
+import { allStatuses, statuses, monthNames, defaultStatuses } from '../../utils/value-objects';
 
 import { lastDayOfMonth, endOfDay } from 'date-fns';
 import { generateYears } from '../../utils/helpers';
-import { deleteProject, getCounter } from '../../data/Projects';
+import { deleteProject } from '../../data/Projects';
 import { ProjectObject, Project } from '../../models/project';
+import { debounce } from '../../components/tables/ProjectDetailTable';
+
+const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+]
 
 const Dashboard: React.FC = () => {
     const { currentUser } = useAuth();
-    const pagination = 20;
     const navigate = useNavigate();
+
     const [projects, setProjects] = React.useState<ProjectObject[]>([]);
     const [lastDoc, setLastDoc] = React.useState<QueryDocumentSnapshot<DocumentData>>();
-    const [count, setCount] = React.useState<number>(0);
+    const [pagination, setPagination] = React.useState<string>('20');
+    const [status, setStatus] = React.useState<string>('Active');
 
-    const [page, setPage] = React.useState<number>(0);
-    const [pages, setPages] = React.useState<number>(0);
-    const [status, setStatus] = React.useState<string>('All');
-    const [monthSelected, setMonthSelected] = React.useState<number>(-1);
+    const [monthSelected, setMonthSelected] = React.useState<number>(new Date().getMonth());
     const [yearSelected, setYearSelected] = React.useState<number>(new Date().getFullYear());
+    const [request, setRequest] = React.useState<string>('');
+    const [requestdb, setRequestdb] = React.useState<string>('');
+    const [wereStatement, setWereStatement] = React.useState<{
+        wereStatus: QueryFieldFilterConstraint,
+        wereStart: QueryFieldFilterConstraint,
+        wereEnds: QueryFieldFilterConstraint,
+        wereRequest: QueryFieldFilterConstraint | null,
+        count: number,
+    }>();
 
     const toast = useToast();
     const [isOpen, setIsOpen] = React.useState(false);
     const onClose = () => setIsOpen(false);
     const cancelRef = React.useRef(null);
     const [project, setProject] = React.useState<ProjectObject>();
-
-    useEffect(() => {
-        if (currentUser) {
-            getCounter('projects').then((count) => {
-                setPage(1);
-                setCount(count?.value | 0);
-                setPages(Math.ceil(count?.value / pagination));
-            });
-        }
-    }, [currentUser]);
-
-    useEffect(() => {
-        if (count) {
-            queryProjects(lastDoc);
-        }
-    }, [count]);
 
     const fetchMore = () => {
         queryProjects(lastDoc);
@@ -113,12 +115,25 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         queryProjects(lastDoc, true);
-    }, [monthSelected, yearSelected, status]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [wereStatement]);
 
-    const queryProjects = (lastDoc: QueryDocumentSnapshot<DocumentData> | undefined, newQuery = false) => {
+    useEffect(() => {
+        createWhere();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [monthSelected, yearSelected, status, requestdb, pagination]);
+
+    const setRequestDb = (req: string) => {
+        setRequestdb(req);
+    }
+
+    const debouncedHandleRequestChange = useMemo(() => debounce(setRequestDb, 300), []);
+
+    const createWhere = async () => {
         if (currentUser) {
             // Where Status
-            const whereStatement = status !== 'All' ? where('status', '==', status) : where('status', 'in', statuses);
+            const wereStatus = status == 'All' ? where('status', 'in', statuses) :
+                status === 'Active' ? where('status', 'in', defaultStatuses) : where('status', '==', status);
 
             // Where Month
 
@@ -126,14 +141,57 @@ const Dashboard: React.FC = () => {
 
             const endOfMonth = monthSelected >= 0 && startOfMonth ? endOfDay(lastDayOfMonth(startOfMonth)) : new Date(yearSelected, 11, 31);
 
-            const whereStart = where('created', '>=', Timestamp.fromDate(startOfMonth));
-            const whereEnds = where('created', '<=', Timestamp.fromDate(endOfMonth));
+            const wereStart = where('created', '>=', Timestamp.fromDate(startOfMonth));
+            const wereEnds = where('created', '<=', Timestamp.fromDate(endOfMonth));
+            const wereRequest = requestdb !== '' ? where('requestNumber', '==', requestdb) : null;
 
-            if (lastDoc && !newQuery) {
-                const queryWithLast = query(collection(db, 'projects'), limit(pagination), whereStatement, whereStart, whereEnds, orderBy('created', 'desc'), startAfter(lastDoc));
+            const countQuery = query(collection(db, "projects"), wereStart, wereEnds, wereStatus, orderBy('created', 'desc'));
+
+            await countQuery.count().get();
+            const unsubscribe = onSnapshot(countQuery, (querySnapshot) => {
+                setWereStatement({
+                    wereStatus,
+                    wereStart,
+                    wereEnds,
+                    wereRequest,
+                    count: querySnapshot.docs.length
+                });
+                unsubscribe();
+            });
+        }
+    }
+
+
+    const queryProjects = (lastDoc: QueryDocumentSnapshot<DocumentData> | undefined, newQuery = false) => {
+        if (currentUser && wereStatement) {
+            const {
+                wereStatus,
+                wereStart,
+                wereEnds,
+                wereRequest,
+                count = 10
+            } = wereStatement;
+
+            const paging = pagination !== 'All' ? Number(pagination) : count;
+
+            if (lastDoc && !newQuery && paging) {
+                const queryWithLast = !wereRequest ? query(
+                    collection(db, 'projects'),
+                    limit(paging),
+                    wereStatus,
+                    wereStart,
+                    wereEnds,
+                    orderBy('created', 'desc'),
+                    startAfter(lastDoc)
+                ) : query(
+                    collection(db, 'projects'),
+                    wereRequest,
+                    limit(paging),
+                    orderBy('created', 'desc'),
+                );
+
                 const unsubscribe = onSnapshot(queryWithLast, (querySnapshot) => {
                     const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
-
                     setProjects([
                         ...projects,
                         ...querySnapshot.docs.map((doc) => ({
@@ -145,7 +203,19 @@ const Dashboard: React.FC = () => {
                     unsubscribe();
                 });
             } else {
-                const queryFist = query(collection(db, 'projects'), whereStatement, whereStart, whereEnds, orderBy('created', 'desc'), limit(pagination));
+                const queryFist = !wereRequest ? query(
+                    collection(db, 'projects'),
+                    wereStatus,
+                    wereStart,
+                    wereEnds,
+                    orderBy('created', 'desc'),
+                    limit(paging)) :
+                    query(
+                        collection(db, 'projects'),
+                        wereRequest,
+                        limit(paging),
+                        orderBy('created', 'desc')
+                    );
 
                 const unsubscribe = onSnapshot(queryFist, (querySnapshot) => {
                     const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
@@ -166,8 +236,11 @@ const Dashboard: React.FC = () => {
         <>
             {currentUser && (
                 <>
-                    <Container maxW="container.lg" overflowX="auto" py={4}>
+                    <Container maxW="container.lg" w={'container.lg'} overflowX="auto" py={4}>
                         <Flex mb="1" alignItems={'center'}>
+                            <Heading size="md" whiteSpace={'nowrap'} pl={3}>
+                                Project List
+                            </Heading>
                             <Spacer />
                             {currentUser.role === 'admin' && (
                                 <Link onClick={() => navigate('users', { replace: true })} colorScheme={'blue.700'} mr={5}>
@@ -182,68 +255,122 @@ const Dashboard: React.FC = () => {
                         </Flex>
 
                         <Box pt={10}>
-                            <Flex alignItems={'center'}>
-                                <Heading size="md" whiteSpace={'nowrap'} flex={1}>
-                                    Project List
-                                </Heading>
-                                <Box>
-                                    <Flex>
-                                        <FormControl id="language_requested" ml={5}>
-                                            <Flex alignItems={'center'} justifyContent={'start'}>
-                                                <FormLabel my={0}>Year</FormLabel>
-                                                <Select
-                                                    maxW={150}
-                                                    ml={2}
-                                                    name={'yearSelected'}
-                                                    id={'yearSelected'}
-                                                    value={yearSelected}
-                                                    onChange={(e) => setYearSelected(Number(e.target.value))}
-                                                >
-                                                    {generateYears().map((s) => (
-                                                        <option key={s} value={s}>
-                                                            {s}
-                                                        </option>
-                                                    ))}
-                                                </Select>
-                                            </Flex>
-                                        </FormControl>
-                                        <FormControl id="language_requested" ml={5}>
-                                            <Flex alignItems={'center'} justifyContent={'start'}>
-                                                <FormLabel my={0}>Month</FormLabel>
-                                                <Select minW={140} ml={2} name={'monthSelected'} id={'monthSelected'} value={monthSelected} onChange={handleFilterDate}>
-                                                    <option value={-1}>All</option>
-                                                    {monthNames.map((s) => (
-                                                        <option key={s.value} value={s.value}>
-                                                            {s.name}
-                                                        </option>
-                                                    ))}
-                                                </Select>
-                                            </Flex>
-                                        </FormControl>
-                                        <FormControl id="language_requested" ml={5}>
-                                            <Flex alignItems={'center'} justifyContent={'start'}>
-                                                <FormLabel my={0}>Status</FormLabel>
-                                                <Select minW={140} ml={2} name={'status'} id={'status'} selected={status} onChange={handleFilter}>
-                                                    {allStatuses.map((s: string) => (
-                                                        <option key={s} value={s}>
-                                                            {s}
-                                                        </option>
-                                                    ))}
-                                                </Select>
-                                            </Flex>
-                                        </FormControl>
-                                    </Flex>
-                                </Box>
-                            </Flex>
+                            <Box>
+                                <Flex>
+                                    <FormControl id="requestNumber" ml={2}>
+                                        <Flex alignItems={'center'} justifyContent={'start'}>
+                                            <FormLabel my={0}>Request</FormLabel>
+                                            <Input w={75}
+                                                value={request}
+                                                type='text'
+                                                onChange={(e) => {
+                                                    debouncedHandleRequestChange(e.target.value);
+                                                    setRequest(e.target.value)
+                                                }}></Input>
+                                        </Flex>
+                                    </FormControl>
+                                    <FormControl id="year_selection" ml={3}>
+                                        <Flex alignItems={'center'} justifyContent={'start'}>
+                                            <FormLabel my={0}>Year</FormLabel>
+                                            <Select
+                                                w={90}
+                                                ml={1}
+                                                name={'yearSelected'}
+                                                id={'yearSelected'}
+                                                value={yearSelected}
+                                                onChange={(e) => setYearSelected(Number(e.target.value))}
+                                            >
+                                                {generateYears().map((s, index) => (
+                                                    <option key={index} value={s}>
+                                                        {s}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                        </Flex>
+                                    </FormControl>
+                                    <FormControl id="month_selection" ml={3}>
+                                        <Flex alignItems={'center'} justifyContent={'start'}>
+                                            <FormLabel my={0}>Month</FormLabel>
+                                            <Select minW={140} ml={1} name={'monthSelected'} id={'monthSelected'} value={monthSelected} onChange={handleFilterDate}>
+                                                {/* <option value={-1}>All</option> */}
+                                                {monthNames.map((s, index) => (
+                                                    <option key={index} value={s.value}>
+                                                        {s.name}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                        </Flex>
+                                    </FormControl>
+                                    <FormControl id="language_requested" ml={3}>
+                                        <Flex alignItems={'center'} justifyContent={'start'}>
+                                            <FormLabel my={0}>Status</FormLabel>
+                                            <Select minW={140} ml={1} name={'status'} id={'status'} value={status} onChange={handleFilter}>
+                                                {allStatuses.map((s: string, index) => (
+                                                    <option key={index} value={s}>
+                                                        {s}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                        </Flex>
+                                    </FormControl>
+                                    <FormControl id="page_size" ml={3}>
+                                        <Flex alignItems={'center'} justifyContent={'start'}>
+                                            <FormLabel my={0}>Page</FormLabel>
+                                            <Select w={'70px'} ml={1} name={'page'} id={'page'}
+                                                value={pagination} onChange={(e) => setPagination(e.target.value)}>
+                                                {['All', '10', '20', '50'].map((s: string, index) =>
+                                                    <option key={index} value={s}>
+                                                        {s}
+                                                    </option>
+                                                )}
+                                            </Select>
+                                        </Flex>
+                                    </FormControl>
+                                </Flex>
+                            </Box>
+                        </Box>
+                        <Box>
+                            <HStack spacing={4} pt={4} pl={3}>
+                                {[
+                                    { Request: requestdb },
+                                    { Year: yearSelected },
+                                    { Month: monthSelected },
+                                    { Status: status }
+                                ].map((obj, index) => (
+                                    <Box key={index}>
+                                        {
+                                            Object.keys(obj)[0] === 'Request' && Object.values(obj)[0] !== '' ?
+                                                <Flex gap={3}>
+                                                    <Tag size={'sm'} key={index} variant='outline' colorScheme='blue'>
+                                                        <TagLabel>{Object.keys(obj)[0]}: {Object.values(obj)[0]}</TagLabel>
+                                                    </Tag>
+                                                    <Text fontSize={'xs'}>Ignored Filters:</Text>
+                                                </Flex> :
+                                                <>{
+                                                    !['', -1,].includes(Object.values(obj)[0]) ?
+                                                        <Tag size={'sm'} key={index} variant='outline' colorScheme='blue'>
+                                                            <TagLabel>
+                                                                {Object.keys(obj)[0]}: {
+                                                                    Object.keys(obj)[0] === 'Month' ?
+                                                                        months[Object.values(obj)[0]] : Object.values(obj)[0]
+                                                                }
+                                                            </TagLabel>
+                                                        </Tag> : null
+                                                }</>
+                                        }
+
+                                    </Box>
+                                ))}
+                            </HStack>
                         </Box>
                         <Box>
                             <ProjectListTable projects={projects} removeProject={removeProject} />
                             <Spacer mt={10} />
                             <Center>
-                                Showing {projects.length} of {count} projects
+                                Showing {projects.length} of {wereStatement?.count} projects
                             </Center>
                             <Center>
-                                {count > projects.length && (
+                                {wereStatement?.count && wereStatement?.count > projects.length && (
                                     <Link onClick={fetchMore} color={'blue.700'}>
                                         Load More...
                                     </Link>

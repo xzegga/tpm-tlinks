@@ -211,7 +211,7 @@ const ProjectDetail: React.FC = () => {
     return (
         <>
             {currentUser && (
-                <Container maxW="full" mt={0} overflow="hidden">
+                <Container maxW="full"  w={'container.lg'}  mt={0} overflow="hidden">
                     <Flex mb='10'>
                         <Box>
                             <Breadcrumb separator='/'>

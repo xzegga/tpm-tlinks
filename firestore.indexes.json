@@ -1,4 +1,23 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "projects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "requestNumber",
+          "direction": "DESC"
+        },
+        {
+          "fieldPath": "status",
+          "direction": "DESC"
+        },
+        {
+          "fieldPath": "created",
+          "direction": "DESC"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

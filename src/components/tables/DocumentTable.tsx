@@ -180,63 +180,61 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     </Flex>
                 </Flex>
             </Box>}
-            <Box>
-                {documents.map((doc) =>
-                    <>
-                        {!doc.data.isCertificate &&
-                            <Box key={doc.id} mb={10}>
-                                <Flex justifyContent={'space-between'} alignItems={'center'} mb={2} mt={5}>
-                                    <Box pl={2}>
-                                        <Flex alignItems={'center'}>
-                                            <Box width={7} mr={3}>
-                                                {doc.data.name && <FileIcon extension={getFileExtension(doc.data.name)} {...getFileIconColor(doc.data.name)} />}
-                                            </Box>
-                                            <Text>{doc.data.name}</Text>
-                                        </Flex>
-                                    </Box>
-                                    <Box>
-                                        {currentUser && currentUser.role === 'admin' &&
-                                            <Link color='blue.400' onClick={() => downloadFile(doc.data.path, doc.data.name)}>
-                                                <Flex justifyContent={'end'} alignItems={'center'}>
-                                                    <AiOutlineDownload />
-                                                    <Text ml={2}>Download Source</Text>
-                                                </Flex>
-                                            </Link>}
-                                    </Box>
-                                </Flex>
-                                {
-                                    doc.data.target?.length &&
-                                    <Box colSpan={2} p={0} borderBottom={'none'}>
-                                        <Box w={'100%'} backgroundColor={'gray.100'} p={2} pl={3} mb={3}>
-                                            {doc.data.target.map((target, i) => (
-                                                <Box key={Math.random()}>
-                                                    <Flex w={'100%'} justifyContent={'space-between'}>
-                                                        <Flex flex={1} m={0} p={2} pt={4} pr={4} justifyContent={'space-between'} alignItems={'flex-start'}>
-                                                            <Flex alignItems={'center'}>
-                                                                <Flag name={target} mr={2} /> {target}
-                                                            </Flex>
-                                                            {currentUser?.role === 'admin' &&
-                                                                <InputFile doc={doc} uploadFile={uploadFile} target={target} />
-                                                            }
-                                                        </Flex>
-                                                        <Box flex={2} borderLeft={'1px'} borderColor={'gray.200'} m={0} p={3} pl={5} pb={0}>
-                                                            {
-                                                                getDocumentById(doc.id, target)
-                                                            }
-                                                        </Box>
-                                                    </Flex>
-                                                    {doc.data.target?.length - 1 !== i && <Divider />}
-                                                </Box>
-                                            ))}
+            {documents.map((doc) =>
+                <Box key={doc.id}>
+                    {!doc.data.isCertificate &&
+                        <Box key={doc.id} mb={10}>
+                            <Flex justifyContent={'space-between'} alignItems={'center'} mb={2} mt={5}>
+                                <Box pl={2}>
+                                    <Flex alignItems={'center'}>
+                                        <Box width={7} mr={3}>
+                                            {doc.data.name && <FileIcon extension={getFileExtension(doc.data.name)} {...getFileIconColor(doc.data.name)} />}
                                         </Box>
+                                        <Text>{doc.data.name}</Text>
+                                    </Flex>
+                                </Box>
+                                <Box>
+                                    {currentUser && currentUser.role === 'admin' &&
+                                        <Link color='blue.400' onClick={() => downloadFile(doc.data.path, doc.data.name)}>
+                                            <Flex justifyContent={'end'} alignItems={'center'}>
+                                                <AiOutlineDownload />
+                                                <Text ml={2}>Download Source</Text>
+                                            </Flex>
+                                        </Link>}
+                                </Box>
+                            </Flex>
+                            {
+                                doc.data.target?.length &&
+                                <Box p={0} borderBottom={'none'}>
+                                    <Box w={'100%'} backgroundColor={'gray.100'} p={2} pl={3} mb={3}>
+                                        {doc.data.target.map((target, i) => (
+                                            <Box key={i}>
+                                                <Flex w={'100%'} justifyContent={'space-between'}>
+                                                    <Flex flex={1} m={0} p={2} pt={4} pr={4} justifyContent={'space-between'} alignItems={'flex-start'}>
+                                                        <Flex alignItems={'center'}>
+                                                            <Flag name={target} mr={2} /> {target}
+                                                        </Flex>
+                                                        {currentUser?.role === 'admin' &&
+                                                            <InputFile doc={doc} uploadFile={uploadFile} target={target} />
+                                                        }
+                                                    </Flex>
+                                                    <Box flex={2} borderLeft={'1px'} borderColor={'gray.200'} m={0} p={3} pl={5} pb={0}>
+                                                        {
+                                                            getDocumentById(doc.id, target)
+                                                        }
+                                                    </Box>
+                                                </Flex>
+                                                {doc.data.target?.length - 1 !== i && <Divider />}
+                                            </Box>
+                                        ))}
                                     </Box>
-                                }
+                                </Box>
+                            }
 
-                            </Box>
-                        }
-                    </>
-                )}
-            </Box>
+                        </Box>
+                    }
+                </Box>
+            )}
             <AlertDialog
                 isOpen={isDeleting}
                 leastDestructiveRef={cancelRef}

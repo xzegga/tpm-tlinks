@@ -6,7 +6,7 @@ const Layout = () => {
     return (
         <Box mb={16}>
             <NavigationBar />
-            <Container maxW='container.lg'>
+            <Container maxW='container.lg' w={'container.lg'} >
                 <Outlet />
             </Container>
         </Box>
