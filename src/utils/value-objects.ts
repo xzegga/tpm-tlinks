@@ -16,3 +16,4 @@ export const monthNames = [
 ];
 
 export const defaultStatuses = ['Received', 'In Progress', 'On Hold'];
+export const adminStatuses = ['In Progress','Completed', 'Archived']

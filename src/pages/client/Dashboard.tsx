@@ -33,7 +33,7 @@ import ProjectListTable from '../../components/tables/ProjectListTable';
 import { useAuth } from '../../context/AuthContext';
 
 import { db } from '../../utils/init-firebase';
-import { allStatuses, statuses, monthNames, defaultStatuses } from '../../utils/value-objects';
+import { allStatuses, statuses, monthNames, defaultStatuses, adminStatuses } from '../../utils/value-objects';
 
 import { lastDayOfMonth, endOfDay } from 'date-fns';
 import { generateYears } from '../../utils/helpers';
@@ -136,9 +136,21 @@ const Dashboard: React.FC = () => {
     const createWhere = async () => {
         if (currentUser) {
             // Where Status
-            const wereStatus = status == 'All' ? where('status', 'in', statuses) :
-                status === 'Active' ? where('status', 'in', defaultStatuses) : where('status', '==', status);
+            let wereStatus;
 
+            switch (status) {
+                case 'All':
+                    wereStatus = where('status', 'in', statuses);
+                    break;
+                case 'Active':
+                    wereStatus = where('status', 'in', defaultStatuses);
+                    break;
+                case 'Billing':
+                    wereStatus = where('status', 'in', adminStatuses);
+                    break;
+                default:
+                    wereStatus = where('status', '==', status);
+            }
             // Where Month
 
             const startOfMonth = monthSelected >= 0 ? new Date(yearSelected, monthSelected, 1) : new Date(yearSelected, 0, 1);
@@ -149,7 +161,7 @@ const Dashboard: React.FC = () => {
             const wereEnds = where('created', '<=', Timestamp.fromDate(endOfMonth));
             const wereRequest = requestdb !== '' ? where('requestNumber', '==', requestdb) : null;
 
-            const countQuery = query(collection(db, "projects"), wereStart, wereEnds, wereStatus, orderBy('created', 'desc'));
+            const countQuery = query(collection(db, "projects"), wereStatus, wereStart, wereEnds, orderBy('created', 'desc'));
             const snapshot = await getCountFromServer(countQuery);
 
             setWereStatement({
@@ -170,66 +182,75 @@ const Dashboard: React.FC = () => {
                 wereStart,
                 wereEnds,
                 wereRequest,
-                count = 10
+                count
             } = wereStatement;
 
-            const paging = pagination !== 'All' ? Number(pagination) : count;
+            if (count === 0) {
+                setProjects([] as ProjectObject[]);
+                return;
+            }
 
-            if (lastDoc && !newQuery && paging) {
-                const queryWithLast = !wereRequest ? query(
-                    collection(db, 'projects'),
-                    limit(paging),
-                    wereStatus,
-                    wereStart,
-                    wereEnds,
-                    orderBy('created', 'desc'),
-                    startAfter(lastDoc)
-                ) : query(
-                    collection(db, 'projects'),
-                    wereRequest,
-                    limit(paging),
-                    orderBy('created', 'desc'),
-                );
+            if (count > 0) {
+                const paging = pagination !== 'All' ? Number(pagination) : count;
 
-                const unsubscribe = onSnapshot(queryWithLast, (querySnapshot) => {
-                    const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
-                    setProjects([
-                        ...projects,
-                        ...querySnapshot.docs.map((doc) => ({
-                            id: doc.id,
-                            data: doc.data() as Project
-                        }))
-                    ]);
-                    setLastDoc(lastDoc);
-                    unsubscribe();
-                });
-            } else {
-                const queryFist = !wereRequest ? query(
-                    collection(db, 'projects'),
-                    wereStatus,
-                    wereStart,
-                    wereEnds,
-                    orderBy('created', 'desc'),
-                    limit(paging)) :
-                    query(
+                if (lastDoc && !newQuery && paging) {
+                    const queryWithLast = !wereRequest ? query(
+                        collection(db, 'projects'),
+                        limit(paging),
+                        wereStatus,
+                        wereStart,
+                        wereEnds,
+                        orderBy('created', 'desc'),
+                        startAfter(lastDoc)
+                    ) : query(
                         collection(db, 'projects'),
                         wereRequest,
                         limit(paging),
-                        orderBy('created', 'desc')
+                        orderBy('created', 'desc'),
                     );
 
-                const unsubscribe = onSnapshot(queryFist, (querySnapshot) => {
-                    const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
-                    setProjects(
-                        querySnapshot.docs.map((doc) => ({
-                            id: doc.id,
-                            data: doc.data() as Project
-                        }))
-                    );
-                    setLastDoc(lastDoc);
-                    unsubscribe();
-                });
+                    const unsubscribe = onSnapshot(queryWithLast, (querySnapshot) => {
+                        const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
+                        setProjects([
+                            ...projects,
+                            ...querySnapshot.docs.map((doc) => ({
+                                id: doc.id,
+                                data: doc.data() as Project
+                            }))
+                        ]);
+                        setLastDoc(lastDoc);
+                        unsubscribe();
+                    });
+                } else {
+                    const queryFist = !wereRequest ? query(
+                        collection(db, 'projects'),
+                        wereStatus,
+                        wereStart,
+                        wereEnds,
+                        orderBy('created', 'desc'),
+                        limit(paging)) :
+                        query(
+                            collection(db, 'projects'),
+                            wereRequest,
+                            limit(paging),
+                            orderBy('created', 'desc')
+                        );
+
+                    const unsubscribe = onSnapshot(queryFist, (querySnapshot) => {
+                        const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
+                        setProjects(
+                            querySnapshot.docs.map((doc) => ({
+                                id: doc.id,
+                                data: doc.data() as Project
+                            }))
+                        );
+                        setLastDoc(lastDoc);
+                        unsubscribe();
+                    });
+                }
+
             }
+
         }
     };
 
@@ -329,6 +350,11 @@ const Dashboard: React.FC = () => {
                                                         {s}
                                                     </option>
                                                 ))}
+                                                {currentUser.role === 'admin' ?
+                                                    <option value={'Billing'}>
+                                                        Billing
+                                                    </option> : null
+                                                }
                                             </Select>
                                         </Flex>
                                     </FormControl>
