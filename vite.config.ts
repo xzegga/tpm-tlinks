@@ -15,6 +15,9 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['jsx-dep']
+  },
+  build: {
+    outDir: './build'
   }
 });
 

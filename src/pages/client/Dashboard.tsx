@@ -18,13 +18,14 @@ import {
     FormLabel,
     Select,
     Input,
-    HStack,
     Tag,
     TagLabel,
     Text
 } from '@chakra-ui/react';
-import { query, collection, onSnapshot, limit, DocumentData, QueryDocumentSnapshot, 
-    startAfter, orderBy, where, Timestamp, QueryFieldFilterConstraint, getCountFromServer } from 'firebase/firestore';
+import {
+    query, collection, onSnapshot, limit, DocumentData, QueryDocumentSnapshot,
+    startAfter, orderBy, where, Timestamp, QueryFieldFilterConstraint, getCountFromServer
+} from 'firebase/firestore';
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavLnk from '../../components/NavLnk';
@@ -39,6 +40,8 @@ import { generateYears } from '../../utils/helpers';
 import { deleteProject } from '../../data/Projects';
 import { ProjectObject, Project } from '../../models/project';
 import { debounce } from '../../components/tables/ProjectDetailTable';
+import { AiOutlineFileExcel } from 'react-icons/ai';
+import { exportToExcel } from '../../utils/export';
 
 const months = [
     "January", "February", "March", "April", "May", "June",
@@ -230,6 +233,24 @@ const Dashboard: React.FC = () => {
         }
     };
 
+    function exportToExcelFn(): void {
+        const headers = [['Request No', 'Project', 'Source Language', 'Target Language', 'Word Count', 'Total']];
+        const dataArray = projects.map((item) => (
+            [
+                item.data.requestNumber,
+                item.data.projectId,
+                item.data.sourceLanguage,
+                item.data.targetLanguage,
+                item.data.wordCount || 0,
+                item.data.billed || 0
+            ]
+        ));
+        const data = [...headers, ...dataArray];
+
+        const fileName = `tpm-${months[monthSelected]}-${yearSelected}.xlsx`;
+        exportToExcel(data, fileName)
+    }
+
     return (
         <>
             {currentUser && (
@@ -328,7 +349,7 @@ const Dashboard: React.FC = () => {
                             </Box>
                         </Box>
                         <Box>
-                            <HStack spacing={4} pt={4} pl={3}>
+                            <Flex gap={4} pt={5} pl={0} alignItems={'center'}>
                                 {[
                                     { Request: requestdb },
                                     { Year: yearSelected },
@@ -359,7 +380,19 @@ const Dashboard: React.FC = () => {
 
                                     </Box>
                                 ))}
-                            </HStack>
+                                {currentUser.role === 'admin' ?
+                                    <Flex flex={1} alignContent={'flex-end'}>
+                                        <Button
+                                            size={'xs'}
+                                            ml={'auto'}
+                                            color={'green.500'}
+                                            leftIcon={<AiOutlineFileExcel />}
+                                            onClick={exportToExcelFn}
+                                        >Export to Excel</Button>
+                                    </Flex>
+                                    : null}
+
+                            </Flex>
                         </Box>
                         <Box>
                             <ProjectListTable projects={projects} removeProject={removeProject} />
