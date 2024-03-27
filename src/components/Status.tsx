@@ -11,6 +11,7 @@ const Status: React.FC<StatusProps> = ({ status }) => {
         if (status === 'Received') return 'cyan'
         if (status === 'In Progress') return 'yellow'
         if (status === 'Completed') return 'green'
+        if (status === 'On Hold') return 'red'
     }
 
     return (

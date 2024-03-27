@@ -1,4 +1,4 @@
-import { Table, Thead, Tr, Th, Tbody, Td, Center, Text } from '@chakra-ui/react';
+import { Table, Thead, Tr, Th, Tbody, Td, Center } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import { ProjectObject } from '../../models/project';
 import ProjectRow from './ProjectRow';

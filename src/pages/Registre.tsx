@@ -45,7 +45,7 @@ const Registre: React.FC = () => {
                         // your register logic here
                         setIsSubmitting(true)
                         register(email, password)
-                            .then((res: any) => {
+                            .then(() => {
                                 toast({
                                     description: 'User created successfully. Please login.',
                                     status: 'error',
@@ -109,7 +109,7 @@ const Registre: React.FC = () => {
                 <DividerWithText my={6}>OR</DividerWithText>
                 <Button
                     variant='outline'
-                    isFullWidth
+                    w={'100%'}
                     colorScheme='red'
                     leftIcon={<FaGoogle />}
                     onClick={() =>

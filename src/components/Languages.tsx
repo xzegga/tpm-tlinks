@@ -1,5 +1,5 @@
 import { Select } from '@chakra-ui/react';
-import React, { useState } from 'react';
+import React from 'react';
 import { featuredLanguages, languageCodes } from '../utils/languageCodes';
 
 interface LanguagesProps {
@@ -10,8 +10,6 @@ interface LanguagesProps {
 }
 
 const Languages: React.FC<LanguagesProps> = ({ selected, name, handleChange, showAll }) => {
-    const [orderedLang, setOrderedLang] = useState();
-
 
     function compare(a: any, b: any) {
         if (a.label < b.label) {

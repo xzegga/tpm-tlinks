@@ -33,7 +33,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
     processedDocuments,
     setProcessedDocuments,
     projectId,
-    saving,
     setSaving,
     downloadFile,
     uploadFile }) => {
@@ -58,10 +57,10 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
         return defaultStyles[ext];
     }
 
-    // Get file name from absolute path
-    const getFileName = (filePath: string) => {
-        return filePath.split('/').pop() || '';
-    }
+    // // Get file name from absolute path
+    // const getFileName = (filePath: string) => {
+    //     return filePath.split('/').pop() || '';
+    // }
 
     const getDocumentById = (docId: string, target: string) => {
         const document = processedDocuments.find(doc => doc.docId === docId);

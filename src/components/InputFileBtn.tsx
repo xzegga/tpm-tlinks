@@ -1,7 +1,6 @@
 import { Button, Flex, Text } from '@chakra-ui/react';
 import React, { useRef } from 'react';
 import { GrDocumentZip } from 'react-icons/gr';
-import { DocumentObject } from '../models/document';
 import '../pages/shared/AddProject.css';
 
 interface InputFileProps {

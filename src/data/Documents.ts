@@ -1,6 +1,5 @@
-import { DocumentReference, DocumentData, addDoc, collection, Timestamp, doc, deleteDoc, getDocs, getDoc, query, where } from "firebase/firestore";
+import { DocumentReference, DocumentData, addDoc, collection, Timestamp, doc, deleteDoc, getDocs, getDoc } from "firebase/firestore";
 import { deleteObject, listAll, ref, uploadBytesResumable } from "firebase/storage";
-import { file } from "jszip";
 import { Doc, DocumentObject, ProcessedDocument, Document } from "../models/document";
 import { ProjectObject } from "../models/project";
 import { createFileName } from "../utils/helpers";

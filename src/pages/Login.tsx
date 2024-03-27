@@ -54,7 +54,7 @@ const Login: React.FC = () => {
 
     const loginWithGoogle = () => {
         signInWithGoogle()
-            .then((user: any) => {
+            .then(() => {
                 handleRedirectToOrBack();
             })
             .catch((error: { message: any; }) => errorToast(error.message));

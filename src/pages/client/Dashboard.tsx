@@ -23,7 +23,8 @@ import {
     TagLabel,
     Text
 } from '@chakra-ui/react';
-import { query, collection, onSnapshot, limit, DocumentData, QueryDocumentSnapshot, startAfter, orderBy, where, Timestamp, QueryFieldFilterConstraint } from 'firebase/firestore';
+import { query, collection, onSnapshot, limit, DocumentData, QueryDocumentSnapshot, 
+    startAfter, orderBy, where, Timestamp, QueryFieldFilterConstraint, getCountFromServer } from 'firebase/firestore';
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavLnk from '../../components/NavLnk';
@@ -146,17 +147,14 @@ const Dashboard: React.FC = () => {
             const wereRequest = requestdb !== '' ? where('requestNumber', '==', requestdb) : null;
 
             const countQuery = query(collection(db, "projects"), wereStart, wereEnds, wereStatus, orderBy('created', 'desc'));
+            const snapshot = await getCountFromServer(countQuery);
 
-            await countQuery.count().get();
-            const unsubscribe = onSnapshot(countQuery, (querySnapshot) => {
-                setWereStatement({
-                    wereStatus,
-                    wereStart,
-                    wereEnds,
-                    wereRequest,
-                    count: querySnapshot.docs.length
-                });
-                unsubscribe();
+            setWereStatement({
+                wereStatus,
+                wereStart,
+                wereEnds,
+                wereRequest,
+                count: snapshot.data().count
             });
         }
     }

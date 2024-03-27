@@ -62,7 +62,7 @@ const AddProject: React.FC = () => {
         if (!files) return;
 
         if (currentUser) {
-            setSaving(true, null);
+            setSaving(true, ()=>console.log);
             const langs = files.map((f) => [...f.target]);
             let multilingual = false;
 

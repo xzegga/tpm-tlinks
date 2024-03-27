@@ -4,7 +4,6 @@ import { Tr, Td, Flex, Badge, Link, Text, IconButton, LinkBox, Tooltip } from '@
 import { Timestamp } from 'firebase/firestore';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 
 import { shortenName, transfromTimestamp } from '../../utils/helpers';
 import Flag from '../Flag';
@@ -24,7 +23,6 @@ const stripped = {
 
 const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
     const navigate = useNavigate();
-    const { currentUser } = useAuth();
 
     return (
 
