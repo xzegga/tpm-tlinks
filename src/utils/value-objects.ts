@@ -1,4 +1,4 @@
-export const statuses = ['Received', 'In Progress', 'Completed', 'Archived', 'On Hold'];
+export const statuses = ['Received', 'In Progress', 'Completed', 'Archived', 'On Hold', 'Quoted'];
 export const allStatuses = ['Active', ...statuses];
 export const monthNames = [
     { name: 'January', value: 0 },
@@ -16,4 +16,4 @@ export const monthNames = [
 ];
 
 export const defaultStatuses = ['Received', 'In Progress', 'On Hold'];
-export const adminStatuses = ['In Progress','Completed', 'Archived']
+export const billingStatuses = ['In Progress','Completed', 'Archived'];

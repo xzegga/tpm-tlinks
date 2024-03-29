@@ -34,7 +34,8 @@
     "react-spinners-kit": "^1.9.1",
     "update": "^0.7.4",
     "use-state-with-callback": "^3.0.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

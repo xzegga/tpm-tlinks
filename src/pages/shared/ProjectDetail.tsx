@@ -135,8 +135,10 @@ const ProjectDetail: React.FC = () => {
 
     const changeStatus = async () => {
         if (project) {
+            const response = await getProjectById(project?.id);
+            
             await setDoc(doc(db, 'projects', project.id), {
-                ...project.data,
+                ...response.data,
                 status: status
             })
 

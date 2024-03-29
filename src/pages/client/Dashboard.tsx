@@ -33,15 +33,16 @@ import ProjectListTable from '../../components/tables/ProjectListTable';
 import { useAuth } from '../../context/AuthContext';
 
 import { db } from '../../utils/init-firebase';
-import { allStatuses, statuses, monthNames, defaultStatuses, adminStatuses } from '../../utils/value-objects';
+import { allStatuses, statuses, monthNames, defaultStatuses, billingStatuses } from '../../utils/value-objects';
 
 import { lastDayOfMonth, endOfDay } from 'date-fns';
 import { generateYears } from '../../utils/helpers';
 import { deleteProject } from '../../data/Projects';
 import { ProjectObject, Project } from '../../models/project';
-import { debounce } from '../../components/tables/ProjectDetailTable';
 import { AiOutlineFileExcel } from 'react-icons/ai';
 import { exportToExcel } from '../../utils/export';
+import useProjectExtras from '../../hooks/useProjectExtras';
+import { useStore } from '../../hooks/useGlobalStore';
 
 const months = [
     "January", "February", "March", "April", "May", "June",
@@ -52,13 +53,19 @@ const Dashboard: React.FC = () => {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
 
+    const { pagination, status, monthSelected, yearSelected, setState } = useStore((state) => (
+        {
+            pagination: state.pagination,
+            status: state.status,
+            monthSelected: state.monthSelected,
+            yearSelected: state.yearSelected,
+            loading: state.loading,
+            setState: state.setState
+        }
+    ))
+
     const [projects, setProjects] = React.useState<ProjectObject[]>([]);
     const [lastDoc, setLastDoc] = React.useState<QueryDocumentSnapshot<DocumentData>>();
-    const [pagination, setPagination] = React.useState<string>('20');
-    const [status, setStatus] = React.useState<string>('Active');
-
-    const [monthSelected, setMonthSelected] = React.useState<number>(new Date().getMonth());
-    const [yearSelected, setYearSelected] = React.useState<number>(new Date().getFullYear());
     const [request, setRequest] = React.useState<string>('');
     const [requestdb, setRequestdb] = React.useState<string>('');
     const [wereStatement, setWereStatement] = React.useState<{
@@ -74,6 +81,7 @@ const Dashboard: React.FC = () => {
     const onClose = () => setIsOpen(false);
     const cancelRef = React.useRef(null);
     const [project, setProject] = React.useState<ProjectObject>();
+    const { debounce } = useProjectExtras(project);
 
     const fetchMore = () => {
         queryProjects(lastDoc);
@@ -109,12 +117,12 @@ const Dashboard: React.FC = () => {
 
     const handleFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setLastDoc(undefined);
-        setStatus(e.target.value);
+        setState({ status: e.target.value });
     };
 
     const handleFilterDate = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setLastDoc(undefined);
-        setMonthSelected(Number(e.target.value));
+        setState({ monthSelected: Number(e.target.value) })
     };
 
     useEffect(() => {
@@ -134,6 +142,8 @@ const Dashboard: React.FC = () => {
     const debouncedHandleRequestChange = useMemo(() => debounce(setRequestDb, 300), []);
 
     const createWhere = async () => {
+
+        setState({loading: true});
         if (currentUser) {
             // Where Status
             let wereStatus;
@@ -146,7 +156,10 @@ const Dashboard: React.FC = () => {
                     wereStatus = where('status', 'in', defaultStatuses);
                     break;
                 case 'Billing':
-                    wereStatus = where('status', 'in', adminStatuses);
+                    wereStatus = where('status', 'in', billingStatuses);
+                    break;
+                case 'Quoted':
+                    wereStatus = where('billed', '>', 0);
                     break;
                 default:
                     wereStatus = where('status', '==', status);
@@ -171,6 +184,7 @@ const Dashboard: React.FC = () => {
                 wereRequest,
                 count: snapshot.data().count
             });
+            if(snapshot.data().count === 0 ) setState({loading: false});
         }
     }
 
@@ -189,7 +203,6 @@ const Dashboard: React.FC = () => {
                 setProjects([] as ProjectObject[]);
                 return;
             }
-
             if (count > 0) {
                 const paging = pagination !== 'All' ? Number(pagination) : count;
 
@@ -219,6 +232,7 @@ const Dashboard: React.FC = () => {
                             }))
                         ]);
                         setLastDoc(lastDoc);
+                        setState({loading: false});
                         unsubscribe();
                     });
                 } else {
@@ -245,6 +259,7 @@ const Dashboard: React.FC = () => {
                             }))
                         );
                         setLastDoc(lastDoc);
+                        setState({loading: false});
                         unsubscribe();
                     });
                 }
@@ -318,7 +333,7 @@ const Dashboard: React.FC = () => {
                                                 name={'yearSelected'}
                                                 id={'yearSelected'}
                                                 value={yearSelected}
-                                                onChange={(e) => setYearSelected(Number(e.target.value))}
+                                                onChange={(e) => setState({ yearSelected: Number(e.target.value) })}
                                             >
                                                 {generateYears().map((s, index) => (
                                                     <option key={index} value={s}>
@@ -362,7 +377,7 @@ const Dashboard: React.FC = () => {
                                         <Flex alignItems={'center'} justifyContent={'start'}>
                                             <FormLabel my={0}>Page</FormLabel>
                                             <Select w={'70px'} ml={1} name={'page'} id={'page'}
-                                                value={pagination} onChange={(e) => setPagination(e.target.value)}>
+                                                value={pagination} onChange={(e) => setState({ pagination: e.target.value })}>
                                                 {['All', '10', '20', '50'].map((s: string, index) =>
                                                     <option key={index} value={s}>
                                                         {s}
