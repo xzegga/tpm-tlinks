@@ -2,13 +2,14 @@ import { Flex, Box, Text, Link, Divider, AlertDialog, useToast, AlertDialogBody,
 import React from 'react';
 import { defaultStyles, FileIcon } from 'react-file-icon';
 import Flag from '../Flag';
-import { useAuth } from '../../context/AuthContext';
 import InputFile from '../InputFile';
 import { shortenFileName } from '../../utils/helpers';
 import { DocumentObject, ProcessedDocument } from '../../models/document';
 import { AiOutlineDownload, AiOutlineSafetyCertificate } from 'react-icons/ai';
 import { DeleteIcon } from '@chakra-ui/icons';
 import { deleteDocument } from '../../data/Documents';
+import { ROLES } from '../../models/users';
+import { useStore } from '../../hooks/useGlobalStore';
 
 interface DocumentsTableProps {
     documents: DocumentObject[];
@@ -37,7 +38,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
     downloadFile,
     uploadFile }) => {
 
-    const { currentUser } = useAuth()
+    const { currentUser } = useStore();
 
     const [isDeleting, setIsDeleting] = React.useState(false)
     const [documentToDelete, setDocumentToDelete] = React.useState<any>(null)
@@ -92,7 +93,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                         <Text ml={2}>Download</Text>
                                     </Flex>
                                 </Link>
-                                {currentUser?.role === 'admin' &&
+                                {currentUser?.role === ROLES.Admin &&
                                     <>
                                         <Divider ml={3} orientation={'vertical'} mr={3} />
                                         <DeleteIcon onClick={() => removeFile(docId, doc)} cursor={'pointer'} color={'red.400'} />
@@ -171,7 +172,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                             </Flex>
                         </Link>
 
-                        {currentUser?.role === 'admin' &&
+                        {currentUser?.role === ROLES.Admin &&
                             <>
                                 <Divider orientation={'vertical'} mx={3} h={'15px'} w={'1px'} />
                                 <DeleteIcon onClick={() => removeFile(certificate.id, certificate)} cursor={'pointer'} color={'red.400'} />
@@ -193,7 +194,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                     </Flex>
                                 </Box>
                                 <Box>
-                                    {currentUser && currentUser.role === 'admin' &&
+                                    {currentUser && currentUser.role === ROLES.Admin &&
                                         <Link color='blue.400' onClick={() => downloadFile(doc.data.path, doc.data.name)}>
                                             <Flex justifyContent={'end'} alignItems={'center'}>
                                                 <AiOutlineDownload />
@@ -213,7 +214,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                                         <Flex alignItems={'center'}>
                                                             <Flag name={target} mr={2} /> {target}
                                                         </Flex>
-                                                        {currentUser?.role === 'admin' &&
+                                                        {currentUser?.role === ROLES.Admin &&
                                                             <InputFile doc={doc} uploadFile={uploadFile} target={target} />
                                                         }
                                                     </Flex>

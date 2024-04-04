@@ -1,13 +1,16 @@
-import { Table, Thead, Tr, Th, Tbody, Td, Button, Select, Image, Flex, Text, Box, Heading, useToast, AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Breadcrumb, BreadcrumbItem, Spacer } from '@chakra-ui/react';
+import { Table, Thead, Tr, Th, Tbody, Td, Button, Select, Image, Flex, Text, Box, useToast, AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Breadcrumb, BreadcrumbItem, Spacer } from '@chakra-ui/react';
 import { query, collection, onSnapshot, setDoc, doc, deleteDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from "firebase/functions";
+import 'firebase/functions'; // Import the functions module
 import React, { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { db } from '../../utils/init-firebase';
+import { ROLES } from '../../models/users';
+import { useStore } from '../../hooks/useGlobalStore';
 
 
 const Users: React.FC = () => {
-    const { currentUser } = useAuth();
+    const { currentUser } = useStore();
     const [users, setUsers] = React.useState<any[]>([]);
     const toast = useToast()
     const [isOpen, setIsOpen] = React.useState(false)
@@ -16,7 +19,7 @@ const Users: React.FC = () => {
     const [user, setUser] = React.useState<any>({})
 
     useEffect(() => {
-        if (currentUser && currentUser.role === 'admin') {
+        if (currentUser && currentUser.role === ROLES.Admin) {
             const queryWithLast = query(collection(db, 'users'))
             const unsubscribe = onSnapshot(queryWithLast, (querySnapshot) => {
                 setUsers(
@@ -31,14 +34,23 @@ const Users: React.FC = () => {
     }, [])
 
     const handleRole = async (user: any, role: string) => {
-        if(user?.data && user?.id) {
-
+        if (user?.data && user?.id) {
             await setDoc(doc(db, 'users', user?.id), {
                 ...user?.data,
-                role: role
+                role
             })
 
             setUsers(users.map(u => u.id === user.id ? { ...u, data: { ...u.data, role: role } } : u))
+            
+            const userWithClaims = {
+                email: user.data.email,
+                customClaims: {
+                    tenant: 'ChildrenHospital',
+                    role,
+                    department: '',
+                }
+            }
+            await assignCustomClaims(userWithClaims);
 
             toast({
                 description: 'User roles updated',
@@ -48,6 +60,23 @@ const Users: React.FC = () => {
             })
         }
     }
+
+    const assignCustomClaims = async (userWithClaims: any) => {
+        try {
+            const functions = getFunctions();
+            const callableAssignCustomClaims = httpsCallable(functions, 'assignUserClaims');
+
+            callableAssignCustomClaims(userWithClaims).then((result: any) => {
+                console.log(result.data.output);
+            }).catch((error) => {
+                console.log(`error: ${JSON.stringify(error)}`);
+            });
+
+        } catch (error) {
+            // Handle error
+            console.error(error);
+        }
+    };
 
     const handleDeleteUser = async () => {
 
@@ -76,16 +105,16 @@ const Users: React.FC = () => {
                             <BreadcrumbItem>
                                 <NavLink to='/admin'>Project Dashboard</NavLink>
                             </BreadcrumbItem>
+                            <BreadcrumbItem>
+                                <Text>Users</Text>
+                            </BreadcrumbItem>
                         </Breadcrumb>
                     </Box>
 
                     <Spacer />
                 </Flex>
-                <Flex alignItems={'center'}>
-                    <Heading size='md' whiteSpace={'nowrap'} flex={1}>User List</Heading>
-                </Flex>
             </Box>
-            {currentUser && currentUser?.role === 'admin' && (
+            {currentUser && currentUser?.role === ROLES.Admin && (
                 <Table>
                     <Thead>
                         <Tr>
@@ -110,15 +139,16 @@ const Users: React.FC = () => {
                                         name="roles"
                                         value={user.data?.role}
                                         onChange={(e) => handleRole(user, e.target.value)}
-                                        disabled={user.data?.role === 'admin' && currentUser?.uid === user.id}
+                                        disabled={user.data?.role ===  ROLES.Admin && currentUser?.uid === user.id}
                                     >
-                                        <option value={'admin'}>Admin</option>
-                                        <option value={'client'}>Client</option>
-                                        <option value={'unauthorized'}>Unauthorized</option>
+                                        <option value={ROLES.Admin}>Admin</option>
+                                        <option value={ROLES.Client}>Client</option>
+                                        <option value={ROLES.Unauthorized}>Unauthorized</option>
+                                        <option value={ROLES.SuperAdmin}>Super Admin</option>
                                     </Select>
                                 </Td>
                                 <Td>
-                                    <Button disabled={user.data?.role === 'admin'} variant="outline" onClick={() => {
+                                    <Button disabled={user.data?.role ===  ROLES.Admin} variant="outline" onClick={() => {
                                         setIsOpen(true);
                                         setUser(user);
                                     }}>Delete</Button>

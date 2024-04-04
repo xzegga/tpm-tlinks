@@ -10,8 +10,9 @@ import { ProjectObject } from "../../models/project";
 
 import { transfromTimestamp } from "../../utils/helpers";
 import Flag from "../Flag";
-import { useAuth } from "../../context/AuthContext";
 import useProjectExtras from "../../hooks/useProjectExtras";
+import { ROLES } from "../../models/users";
+import { useStore } from "../../hooks/useGlobalStore";
 
 export interface ProjectTableProps {
     project: ProjectObject;
@@ -20,7 +21,7 @@ export interface ProjectTableProps {
 
 
 const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
-    const { currentUser } = useAuth()
+    const { currentUser } = useStore();
 
     const {
         loading,
@@ -90,7 +91,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                             </Flex>
                         </Td>
                     </Tr>
-                    {currentUser?.role === 'admin' ? (
+                    {currentUser?.role === ROLES.Admin ? (
                         <>
                             {/* Word Count */}
                             <Tr>
@@ -166,15 +167,15 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                     {project?.data?.comments !== '' ? <>
                         <Tr>
                             <Td borderWidth={0}
-                                colSpan={currentUser?.role !== 'admin' ? 2 : 1}
+                                colSpan={currentUser?.role !== ROLES.Admin ? 2 : 1}
                             ><Text py={2} fontWeight={'bold'}>Translator Comments:</Text>
-                                {currentUser?.role !== 'admin' ?
+                                {currentUser?.role !== ROLES.Admin ?
                                     <Box background={'yellow.100'} color={'yellow.900'} w={'100%'} p={3} borderRadius={3}>
                                         <Text >{project?.data?.comments}</Text>
                                     </Box> :
                                     null}
                             </Td>
-                            {currentUser?.role === 'admin' ? (
+                            {currentUser?.role === ROLES.Admin ? (
                                 <Td borderWidth={0}>
 
                                     <FormControl id="comments_info">

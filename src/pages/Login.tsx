@@ -8,7 +8,8 @@ import DividerWithText from '../components/DividerWithText';
 import Card from '../components/Card';
 import useMounted from '../hooks/useMounted';
 import Loading from '../components/Loading';
-
+import { useStore } from '../hooks/useGlobalStore';
+import { LoggedUser } from '../store/initialGlobalState';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -19,11 +20,27 @@ const Login: React.FC = () => {
     const [email, setEmail] = useState<string>('')
     const [password, setPassword] = useState<string>('')
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+    const { setState } = useStore();
 
-    const handleRedirectToOrBack = () => {
+    const handleRedirectToOrBack = async () => {
         const user = currentUser as UserWithRoles
-        if (user?.role) {
-            navigate(`/${user.role}/`, { replace: false })
+        if (user) {
+            // Read claims from the user object
+            const { claims } = await user.getIdTokenResult();
+
+            if (claims?.role) {
+                setState({
+                    currentUser: {
+                        uid: claims.user_id as string,
+                        role: claims.role as string,
+                        tenant: claims.tenant as string,
+                        department: claims.department as string,
+                        ...currentUser,
+                    } as LoggedUser
+                });
+
+                navigate(`/${claims?.role}/`, { replace: false })
+            }
         }
     }
 
@@ -36,8 +53,6 @@ const Login: React.FC = () => {
     const submit = async (e: any) => {
         e.preventDefault()
         if (!email || !password) {
-
-
             return
         }
 
@@ -54,7 +69,8 @@ const Login: React.FC = () => {
 
     const loginWithGoogle = () => {
         signInWithGoogle()
-            .then(() => {
+            .then((response) => {
+                console.log(response)
                 handleRedirectToOrBack();
             })
             .catch((error: { message: any; }) => errorToast(error.message));

@@ -18,6 +18,8 @@ export interface Project {
     comments?: string;
     wordCount?: number;
     billed?: number;
+    tenant?: string;
+    department?: string;
 }
 
 export interface ProjectObject {

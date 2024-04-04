@@ -30,7 +30,6 @@ import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavLnk from '../../components/NavLnk';
 import ProjectListTable from '../../components/tables/ProjectListTable';
-import { useAuth } from '../../context/AuthContext';
 
 import { db } from '../../utils/init-firebase';
 import { allStatuses, statuses, monthNames, defaultStatuses, billingStatuses } from '../../utils/value-objects';
@@ -43,6 +42,7 @@ import { AiOutlineFileExcel } from 'react-icons/ai';
 import { exportToExcel } from '../../utils/export';
 import useProjectExtras from '../../hooks/useProjectExtras';
 import { useStore } from '../../hooks/useGlobalStore';
+import { ROLES } from '../../models/users';
 
 const months = [
     "January", "February", "March", "April", "May", "June",
@@ -50,7 +50,7 @@ const months = [
 ]
 
 const Dashboard: React.FC = () => {
-    const { currentUser } = useAuth();
+    const { currentUser } = useStore();
     const navigate = useNavigate();
 
     const { pagination, status, monthSelected, yearSelected, setState } = useStore((state) => (
@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
 
     const createWhere = async () => {
 
-        setState({loading: true});
+        setState({ loading: true });
         if (currentUser) {
             // Where Status
             let wereStatus;
@@ -184,7 +184,7 @@ const Dashboard: React.FC = () => {
                 wereRequest,
                 count: snapshot.data().count
             });
-            if(snapshot.data().count === 0 ) setState({loading: false});
+            if (snapshot.data().count === 0) setState({ loading: false });
         }
     }
 
@@ -232,7 +232,7 @@ const Dashboard: React.FC = () => {
                             }))
                         ]);
                         setLastDoc(lastDoc);
-                        setState({loading: false});
+                        setState({ loading: false });
                         unsubscribe();
                     });
                 } else {
@@ -259,7 +259,7 @@ const Dashboard: React.FC = () => {
                             }))
                         );
                         setLastDoc(lastDoc);
-                        setState({loading: false});
+                        setState({ loading: false });
                         unsubscribe();
                     });
                 }
@@ -297,10 +297,15 @@ const Dashboard: React.FC = () => {
                                 Project List
                             </Heading>
                             <Spacer />
-                            {currentUser.role === 'admin' && (
-                                <Link onClick={() => navigate('users', { replace: true })} colorScheme={'blue.700'} mr={5}>
-                                    Manage Users
-                                </Link>
+                            {currentUser.role === ROLES.Admin && (
+                                <Flex>
+                                    <Link onClick={() => navigate('users', { replace: true })} colorScheme={'blue.700'} mr={5}>
+                                        Manage Users
+                                    </Link>
+                                    <Link onClick={() => navigate('clients', { replace: true })} colorScheme={'blue.700'} mr={5}>
+                                        Manage Clients
+                                    </Link>
+                                </Flex>
                             )}
                             <Box>
                                 <NavLnk to="projects/add" name="New Project" colorScheme="blue.500" bg="blue.700" size="md" color="white">
@@ -365,7 +370,7 @@ const Dashboard: React.FC = () => {
                                                         {s}
                                                     </option>
                                                 ))}
-                                                {currentUser.role === 'admin' ?
+                                                {currentUser.role ===  ROLES.Admin ?
                                                     <option value={'Billing'}>
                                                         Billing
                                                     </option> : null
@@ -421,7 +426,7 @@ const Dashboard: React.FC = () => {
 
                                     </Box>
                                 ))}
-                                {currentUser.role === 'admin' ?
+                                {currentUser.role ===  ROLES.Admin ?
                                     <Flex flex={1} alignContent={'flex-end'}>
                                         <Button
                                             size={'xs'}

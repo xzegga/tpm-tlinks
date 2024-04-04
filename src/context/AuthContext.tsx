@@ -12,24 +12,28 @@ import firebase, {
 } from 'firebase/auth'
 import { apiUrl } from '../utils/config';
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { ROLES } from '../models/users';
 
-type User = firebase.User | null;
+export type User = firebase.User | null;
 
 type Roles = {
-  role: string;
+  role: keyof typeof ROLES;
 }
+
 export type UserWithRoles = User & Roles;
 
 type ContextState = {
   currentUser: UserWithRoles | null | undefined,
-  signInWithGoogle: Function,
-  login: Function,
-  register: Function,
-  logout: Function,
-  forgotPassword: Function,
-  resetPassword: Function,
+  signInWithGoogle: () => Promise<firebase.UserCredential>,
+  login: (...args: any[]) => Promise<firebase.UserCredential>,
+  register: (...args: any[]) => Promise<firebase.UserCredential>,
+  logout: (...args: any[]) => Promise<void>,
+  forgotPassword: (...args: any[]) => Promise<void>,
+  resetPassword: (...args: any[]) => Promise<void>,
 }
+
 let currentUser;
+
 export const AuthContext = createContext<ContextState>({
   currentUser
 } as ContextState)
@@ -62,6 +66,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
           photoUrl: user.photoURL,
           role: 'unauthorized',
           tenant: 'fiuFtXRQ73mmgUwnRwRE',
+          department: '',
         })
       }
       user.role = userDetails?.role || 'unauthorized';

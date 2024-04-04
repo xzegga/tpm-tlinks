@@ -35,6 +35,8 @@ import { saveProject } from '../../data/Projects';
 import { addDays } from 'date-fns';
 import './AddProject.css';
 import Urgent from '../../assets/isUrgent.svg?react';
+import { ROLES } from '../../models/users';
+import { useStore } from '../../hooks/useGlobalStore';
 
 const initialState: Project = {
     projectId: '',
@@ -55,7 +57,7 @@ const AddProject: React.FC = () => {
     const [files, setFiles] = useState<Doc[]>([]);
     const [saving, setSaving] = useStateWithCallbackLazy<boolean>(false);
     const [project, setProject] = useState<Project>(initialState);
-    const { currentUser } = useAuth();
+    const { currentUser } = useStore();
     const navigate = useNavigate();
 
     const saveRequest = async () => {
@@ -134,7 +136,7 @@ const AddProject: React.FC = () => {
                                                                 <Input placeholder="Request Number" name="requestNumber" id="requestNumber" value={project.requestNumber} onChange={handleInput} />
                                                             </InputGroup>
                                                         </FormControl>
-                                                        {currentUser.role === 'admin' && (
+                                                        {currentUser.role ===  ROLES.Admin && (
                                                             <FormControl id="language_requested">
                                                                 <FormLabel>Created Date (Only Admin)</FormLabel>
                                                                 <InputGroup borderColor="#E0E1E7">

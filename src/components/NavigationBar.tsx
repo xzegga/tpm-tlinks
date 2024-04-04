@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
     useColorMode,
     useColorModeValue,
@@ -13,14 +13,38 @@ import {
 import { FaMoon, FaSun } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext';
 import Navlnk from './NavLnk';
-
-import  MarkLogo from '../assets/logo-chco-mark-color.svg?react';
-import TypeLogo from '../assets/logo-chco-type-color.svg?react';
 import { useNavigate } from 'react-router-dom';
+import { useStore } from '../hooks/useGlobalStore';
 
 const NavigationBar: React.FC = () => {
     const { toggleColorMode } = useColorMode()
-    const { logout, currentUser } = useAuth()
+    const { logout } = useAuth()
+    const { currentUser: currentUser } = useStore();
+    const ImportedIconRef = useRef<React.FC<React.SVGProps<SVGElement>>>();
+    const IsotipoRef = useRef<React.FC<React.SVGProps<SVGElement>>>();
+
+    useEffect(() => {
+        const importSvgIcon = async (): Promise<void> => {
+            try {
+                const { default: SvgLogo } = (await import(`../assets/${currentUser.tenant}-logo.svg?react`));
+                ImportedIconRef.current = SvgLogo;
+
+                const { default: SvgIso } = (await import(`../assets/${currentUser.tenant}-isotipo.svg?react`));
+                IsotipoRef.current = SvgIso
+                console.log(IsotipoRef.current)
+                // svgr provides ReactComponent for given svg path
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+
+        if (currentUser?.tenant) {
+            console.log('something')
+            importSvgIcon();
+        }
+
+    }, [currentUser]);
 
     const navigate = useNavigate()
 
@@ -28,8 +52,11 @@ const NavigationBar: React.FC = () => {
         e.preventDefault()
         await logout()
         navigate('/login', { replace: true })
-
     }
+
+
+    const Logo = ImportedIconRef.current;
+    const Isotipo = IsotipoRef.current;
 
     return (
         <Box
@@ -49,10 +76,16 @@ const NavigationBar: React.FC = () => {
                 {currentUser && (
                     <>
                         <Flex align='center' justify='left'>
+
                             <Flex alignItems={'center'} mr={10}>
-                                <Box mr={2} ><MarkLogo /></Box>
-                                <Box mt={5} ml={-2} ><TypeLogo width={180} /></Box>
+                                <Box mr={2}>
+                                    {Logo && <Logo />}
+                                </Box>
+                                <Box mt={5} ml={-2} >
+                                    {Isotipo && <Isotipo />}
+                                </Box>
                             </Flex>
+
                             {currentUser && currentUser?.photoURL && <Image borderRadius='full' boxSize='35px' src={currentUser?.photoURL} mt="0" />}
                             <Text mt={0} fontSize="sm" fontWeight="semibold" lineHeight="short" pl="2">
                                 {currentUser?.displayName && (<span>{currentUser?.displayName} <br /></span>)}

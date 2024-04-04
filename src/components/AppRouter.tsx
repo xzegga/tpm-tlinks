@@ -11,11 +11,9 @@ import ProtectedRoute from './ProtectedRoute';
 import Registre from '../pages/Registre';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
+import Tenants from '../pages/admin/Tenants';
+import { ROLES } from '../models/users';
 
-const ROLES = {
-    admin: 'admin',
-    client: 'client',
-}
 
 const AppRouter: React.FC = () => {
     return (
@@ -28,14 +26,15 @@ const AppRouter: React.FC = () => {
                     <Route path="unauthorized" element={<Unauthorized />} />
                     <Route path="forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="reset-password" element={<ResetPasswordPage />} />
-                    <Route path="/" element={<ProtectedRoute allowedRoles={ROLES.client} />} >
+                    <Route path="/" element={<ProtectedRoute allowedRoles={ROLES.Client} />} >
                         <Route path="client" element={<Dashboard />} />
                         <Route path="client/project/:projectId" element={<ProjectDetail />} />
                         <Route path="client/projects/add" element={<AddProject />} />
                     </Route>
-                    <Route path="/" element={<ProtectedRoute allowedRoles={ROLES.admin} />} >
+                    <Route path="/" element={<ProtectedRoute allowedRoles={ROLES.Admin} />} >
                         <Route path="admin" element={<Dashboard />} />
                         <Route path="admin/users" element={<Users />} />
+                        <Route path="admin/clients" element={<Tenants />} />
                         <Route path="admin/project/:projectId" element={<ProjectDetail />} />
                         <Route path="admin/projects/add" element={<AddProject />} />
                     </Route>

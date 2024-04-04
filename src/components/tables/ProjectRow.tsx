@@ -14,6 +14,7 @@ import Urgent from '../../assets/isUrgent.svg?react';
 import { useAuth } from '../../context/AuthContext';
 import useProjectExtras from '../../hooks/useProjectExtras';
 import { useStore } from '../../hooks/useGlobalStore';
+import { ROLES } from '../../models/users';
 interface ProjectRowProps {
     project: ProjectObject;
     removeProject: (project: ProjectObject) => void;
@@ -26,7 +27,7 @@ const stripped = {
 
 const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
     const navigate = useNavigate();
-    const { currentUser } = useAuth();
+    const { currentUser } = useStore();
 
     const { status, loading: projectLoading } = useStore()
 
@@ -162,7 +163,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
             >
                 {project.data.status && <Status status={project.data.status} />}
             </LinkBox>
-            {currentUser?.role === 'admin' ? <>
+            {currentUser?.role === ROLES.Admin ? <>
                 <Td px={1.5} py={0.5}>
                     <FormControl id="wordCount_number">
                         <Input

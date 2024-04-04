@@ -21,11 +21,16 @@ import './AddProject.css';
 import InputFileBtn from '../../components/InputFileBtn';
 import { getProjectById } from '../../data/Projects';
 import Urgent from '../../assets/isUrgent.svg?react';
-import * as jszip from 'jszip';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+import JSZip from 'jszip';
+import { ROLES } from '../../models/users';
+import { useStore } from '../../hooks/useGlobalStore';
+
+const jszip = new JSZip();
 
 const ProjectDetail: React.FC = () => {
     const { projectId } = useParams();
-    const { currentUser } = useAuth()
+    const { currentUser } = useStore();
 
     const toast = useToast()
     const [isOpen, setIsOpen] = React.useState(false)
@@ -136,7 +141,7 @@ const ProjectDetail: React.FC = () => {
     const changeStatus = async () => {
         if (project) {
             const response = await getProjectById(project?.id);
-            
+
             await setDoc(doc(db, 'projects', project.id), {
                 ...response.data,
                 status: status
@@ -161,7 +166,7 @@ const ProjectDetail: React.FC = () => {
         document: DocumentObject | null = null,
         target: string | null = null) => {
         // Get month name of current date             
-        if (project && currentUser?.role === 'admin' && document && target) {
+        if (project && currentUser?.role === ROLES.Admin && document && target) {
             setSaving(true, () => console.log("Saving"))
 
             const newDocument = await saveTargetDocuments(files, document, project, target)
@@ -213,7 +218,7 @@ const ProjectDetail: React.FC = () => {
     return (
         <>
             {currentUser && (
-                <Container maxW="full"  w={'container.lg'}  mt={0} overflow="hidden">
+                <Container maxW="full" w={'container.lg'} mt={0} overflow="hidden">
                     <Flex mb='10'>
                         <Box>
                             <Breadcrumb separator='/'>
@@ -238,7 +243,7 @@ const ProjectDetail: React.FC = () => {
                                         </Flex> : null}
                                 </Flex>
 
-                                {currentUser.role === 'admin' && (
+                                {currentUser.role === ROLES.Admin && (
                                     <Select
                                         value={project.data.status}
                                         onChange={(e) => handleChangeStatus(e.target.value)}
@@ -249,7 +254,7 @@ const ProjectDetail: React.FC = () => {
                                         ))}
                                     </Select>
                                 )}
-                                {project.data.status && currentUser.role === 'client' && <Status status={project.data.status} />}
+                                {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>
                             <ProjectTable project={project}></ProjectTable>
 
@@ -261,7 +266,7 @@ const ProjectDetail: React.FC = () => {
                             <Flex justifyContent={'flex-end'} mb={2} mr={3}>
                                 {(project?.data.isCertificate && !certificate) && <InputFileBtn uploadFile={uploadFile} />}
 
-                                {currentUser.role === 'client' && processedDocuments?.length >= 1 && <Button ml={3}
+                                {currentUser?.role === ROLES.Client && processedDocuments?.length >= 1 && <Button ml={3}
                                     leftIcon={<GrDocumentZip className={'white-icon'} />}
                                     colorScheme='blue'
                                     onClick={() => downloadZippedFiles()}>
@@ -270,7 +275,7 @@ const ProjectDetail: React.FC = () => {
                                     </Flex>
                                 </Button>}
 
-                                {currentUser.role === 'admin' && documents?.length >= 1 && <Button ml={3}
+                                {currentUser.role === ROLES.Admin && documents?.length >= 1 && <Button ml={3}
                                     leftIcon={<GrDocumentZip className={'white-icon'} />}
                                     colorScheme='blue'
                                     onClick={() => downloadSourceZippedFiles()}>

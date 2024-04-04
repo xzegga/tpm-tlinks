@@ -2,8 +2,8 @@ import { Table, Thead, Tr, Th, Tbody, Td, Center, Spinner, Flex } from '@chakra-
 import React, { useEffect, useState } from 'react';
 import { ProjectObject } from '../../models/project';
 import ProjectRow from './ProjectRow';
-import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../hooks/useGlobalStore';
+import { ROLES } from '../../models/users';
 
 interface ProjectListTableProps {
     projects: ProjectObject[];
@@ -11,7 +11,7 @@ interface ProjectListTableProps {
 }
 
 const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removeProject }) => {
-    const { currentUser } = useAuth();
+    const { currentUser } = useStore();
     const { status, loading } = useStore()
 
     const [urgentProjects, setUrgentProjects] = useState<ProjectObject[]>([]);
@@ -43,7 +43,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>Target</Th>
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
-                                {currentUser?.role === 'admin' || (status === 'Quoted' && !loading) ? <>
+                                {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>
                                 </> : null}
@@ -68,7 +68,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>Target</Th>
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
-                                {currentUser?.role === 'admin' || (status === 'Quoted' && !loading) ? <>
+                                {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>
                                 </> : null}
