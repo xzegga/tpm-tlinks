@@ -14,5 +14,4 @@ export const assignUserClaims = onCall(async (request) => {
 export const getProjects = onCall(async (request) => {
   const projectsData = await getProjectsData(db, request);
   return projectsData;
-  return {};
 });

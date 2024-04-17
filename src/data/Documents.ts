@@ -47,8 +47,6 @@ export const saveDocuments = (documents: Doc[], code: string, projectRef: Docume
 }
 
 export const saveCertificate = async (file: File, code: string, projectRef: DocumentReference<DocumentData>) => {
-    console.log(file, code, projectRef);
-
     const promises: any[] = [];
     // Get month name of current date            
     const month = new Date().toLocaleString('default', { month: 'long' });
@@ -90,7 +88,6 @@ export const saveTargetDocuments = async (
 ) => {
     const month = new Date().toLocaleString('default', { month: 'long' });
     const year = new Date().getFullYear();
-    console.log('start uploading promises');
     const promises: any[] = [];
     // Get month name of current date            
 
@@ -112,7 +109,6 @@ export const saveTargetDocuments = async (
     const filesUploaded: DocumentObject[] = []
     const files = await Promise.all(promises);
     for (let file of files) {
-        console.log('Getting file saved', file);
         try {
 
             const ref = await addDoc(targetDocumentsRef, {
@@ -132,8 +128,6 @@ export const saveTargetDocuments = async (
             console.log(error);
         }
     }
-
-    console.log('Returning data files', filesUploaded)
 
     return filesUploaded;
 

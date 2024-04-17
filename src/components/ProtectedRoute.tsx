@@ -1,5 +1,5 @@
 import { Navigate, useLocation, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useStore } from "../hooks/useGlobalStore";
 
 interface ProtectedRouteProps {
     allowedRoles?: string;
@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     const location = useLocation();
-    const { currentUser } = useAuth()
+    const { currentUser } = useStore()
 
     return currentUser && allowedRoles === currentUser.role
         ? <Outlet />

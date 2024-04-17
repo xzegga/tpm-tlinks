@@ -6,6 +6,7 @@ import { Project } from '../models/project';
 import { twoDigitDate } from '../utils/helpers';
 import { db, storage } from '../utils/init-firebase';
 import { saveDocuments } from './Documents';
+import { Tenant } from '../models/clients';
 
 export const getProjectById = async (projectId: string) => {
     const docRef = doc(collection(db, 'projects'), projectId);
@@ -16,9 +17,10 @@ export const getProjectById = async (projectId: string) => {
     };
 };
 
-export const saveProject = async (project: Project, files: Doc[]) => {
+export const saveProject = async (project: Project, files: Doc[], tenant: Tenant) => {
     try {
-        const projectCode = await getCorrelativeID(project.created);
+        const code = project.department === 'all' ? tenant.code : project.department || 'all';
+        const projectCode = await getCorrelativeID(code, project);
         const projectDoc = collection(db, 'projects');
         const counterProj = doc(db, 'counters', 'projects');
         const counter = await getCounter('projects');
@@ -38,7 +40,9 @@ export const saveProject = async (project: Project, files: Doc[]) => {
             additionalInfo: project.additionalInfo,
             status: project.status,
             requestNumber: project.requestNumber,
-            isUrgent: project.isUrgent
+            isUrgent: project.isUrgent,
+            tenant: project.tenant,
+            department: project.department
         });
 
         await setDoc(counterProj, { value: (counter?.value | 0) + 1 });
@@ -50,11 +54,17 @@ export const saveProject = async (project: Project, files: Doc[]) => {
     }
 };
 
-export const getCorrelativeID = async (created?: Timestamp) => {
+export const getCorrelativeID = async (code: string, project?: Project) => {
+    const created: Timestamp | undefined = project?.created;
     const createdDate = created?.toDate() || new Date();
     const today = Timestamp.fromDate(new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()));
-    const q = query(collection(db, 'projects'), where('created', '>=', today));
-
+    const q = query(
+        collection(db, 'projects'), 
+        where('created', '>=', today),
+        where('tenant', '==', project?.tenant),
+        where('department', '==', project?.department)
+    );
+ 
     const querySnapshot = await getDocs(q);
 
     // Build project id base on current date and correlative
@@ -67,7 +77,7 @@ export const getCorrelativeID = async (created?: Timestamp) => {
     // Get alphabete letter by index
 
     const letter = count > 0 ? `-${String.fromCharCode(65 + count)}` : '';
-    const projectId = `TCH-${month}${day}${year}${letter}`;
+    const projectId = `${code}-${month}${day}${year}${letter}`;
     return projectId;
 };
 
@@ -142,3 +152,28 @@ export const updateWordCount = async (projectId: string, wordCount: number) => {
         console.error('Error updating amount billed:', error);
     }
 };
+
+// export const tenantMigration = async () => {
+//     const projectsCollection = collection(db, 'projects');
+
+//     // Fetch existing projects (consider adding query constraints if needed)
+//     const querySnapshot = await getDocs(query(projectsCollection));
+
+//     // Update projects in a batch (improves efficiency for multiple updates)
+//     const batch = writeBatch(db);
+//     querySnapshot.forEach((doc) => {
+//         const project: Project = doc.data() as Project;
+//         if (!project.tenant) {
+//             console.log('No tentant', project.projectId);
+//             const projectRef = doc.ref;
+//             const updatedProject = {
+//                 tenant: 'ChildrenHospital', // Set your desired fixed tenant value
+//                 department: 'all' // Set your desired fixed department value
+//             };
+//             batch.update(projectRef, updatedProject);
+//         }
+//     });
+
+//     await batch.commit();
+//     console.log('done')
+// };

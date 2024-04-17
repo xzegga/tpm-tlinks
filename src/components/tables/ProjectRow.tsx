@@ -1,20 +1,22 @@
-import React from 'react';
-
-import { Tr, Td, Flex, Badge, Link, Text, IconButton, LinkBox, Tooltip, FormControl, Input, Box, Spinner } from '@chakra-ui/react';
 import { Timestamp } from 'firebase/firestore';
+import React from 'react';
+import { AiOutlineStar } from 'react-icons/ai';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 
+import {
+    Badge, Box, Flex, FormControl, IconButton, Input, Link, LinkBox, Spinner, Td, Text, Tooltip, Tr
+} from '@chakra-ui/react';
+
+import Urgent from '../../assets/isUrgent.svg?react';
+import { useStore } from '../../hooks/useGlobalStore';
+import useProjectExtras from '../../hooks/useProjectExtras';
+import { ProjectObject } from '../../models/project';
+import { ROLES } from '../../models/users';
 import { shortenName, transfromTimestamp } from '../../utils/helpers';
 import Flag from '../Flag';
 import Status from '../Status';
-import { ProjectObject } from '../../models/project';
-import { AiOutlineStar } from 'react-icons/ai';
-import Urgent from '../../assets/isUrgent.svg?react';
-import { useAuth } from '../../context/AuthContext';
-import useProjectExtras from '../../hooks/useProjectExtras';
-import { useStore } from '../../hooks/useGlobalStore';
-import { ROLES } from '../../models/users';
+
 interface ProjectRowProps {
     project: ProjectObject;
     removeProject: (project: ProjectObject) => void;
@@ -41,6 +43,10 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
         dbHandleWordCountChange
     } = useProjectExtras(project);
 
+    const convertTimeStamp = (time: any) => {
+        const timeStamp = new Timestamp(time._seconds, time._nanoseconds);
+        return transfromTimestamp(timeStamp)
+    }
     return (
 
         <Tr cursor={'pointer'} _hover={{ bg: 'gray.100' }} style={project.data.status === 'Archived' ? stripped : {}}>
@@ -150,7 +156,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
                 style={{ whiteSpace: 'nowrap' }}
                 _hover={{ bg: 'gray.100' }}
             >
-                {project.data.created && transfromTimestamp(project.data.timeLine as Timestamp)}
+                {project.data.created && convertTimeStamp(project.data.created)}
             </LinkBox>
             <LinkBox
                 as={Td}

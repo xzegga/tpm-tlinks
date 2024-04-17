@@ -1,13 +1,15 @@
 import {
     Box, Breadcrumb, BreadcrumbItem, Container, Flex, Image, Spacer, Table,
     Tbody, Td, Text, Th, Thead, Tr, FormControl, FormLabel, Input, InputGroup,
-    Button
+    Button,
+    useToast,
+    Checkbox
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from 'react';
 import { NavLink } from "react-router-dom";
 import { Tenant } from "../../models/clients";
 import { useDropzone } from "react-dropzone";
-import { AiOutlineCloudUpload } from "react-icons/ai";
+import { AiOutlineCloudUpload, AiOutlineEdit } from "react-icons/ai";
 import { useStore } from "../../hooks/useGlobalStore";
 import { ROLES } from "../../models/users";
 import { getAllTenants, getImageUrl, saveTenant, updateTenant } from "../../data/Tenant";
@@ -19,10 +21,13 @@ const Tenants: React.FC = () => {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [departments, setDepartments] = useState<string>('');
+    const [code, setCode] = useState<string>('');
+    const [checked, setChecked] = useState<boolean>('');
     const [file, setFile] = useState<File | null>(null);
-    const { currentUser, setState } = useStore();
+    const { currentUser, setState, loading } = useStore();
     const [images, setImages] = useState<Record<string, string | null>>({});
-
+    const toast = useToast()
+    
     const {
         getRootProps,
         getInputProps
@@ -56,39 +61,69 @@ const Tenants: React.FC = () => {
         } as Tenant);
     };
 
+    const handleInputCode = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setTenant({
+            ...tenant,
+            code: e.target.value,
+        } as Tenant);
+        setCode(e.target.value)
+    };
+
     const handleInputDep = (e: React.ChangeEvent<HTMLInputElement>) => {
         const departmentsArray = e.target.value.split(',')
             .map(item => item.trim())
             .filter(item => item !== '')
+
         setTenant({
             ...tenant,
             departments: departmentsArray
         } as Tenant);
+
         setDepartments(e.target.value)
     };
 
+    const setCheckedItems = (chk: boolean)=>{
+        setTenant({
+            ...tenant,
+            export: chk,
+        } as Tenant);
+        setChecked(checked)
+    }
+
     const saveRequest = async () => {
-        console.log(currentUser && currentUser.role === ROLES.Admin);
-        if (!tenant?.name) return;
+        if (!tenant?.name || !tenant?.code) {
+            toast({
+                description: `Name or Code field are missing`,
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
 
         if (currentUser && currentUser.role === ROLES.Admin && tenant) {
             setState({ loading: true })
 
             if (tenant.id) {
                 await updateTenant(tenant, file);
+
                 const newTenants = [ ...tenants ];
                 const index = newTenants.findIndex(item => item.id === tenant.id)
+                
                 if (index !== -1) {
                     newTenants[index] = {
                         ...newTenants[index],
                         name: tenant.name,
                         departments: tenant.departments,
+                        code: tenant.code,
+                        export: tenant.export,
                         ...(file && { image: `/ClientLogos/${file?.name}` })
                     }
                     setTenants(newTenants)
                 }
             } else {
                 await saveTenant(tenant, file);
+                setTenants([...tenants, tenant]);
             }
             setState({ loading: false });
             cancelHandle();
@@ -99,6 +134,7 @@ const Tenants: React.FC = () => {
         setTenant(null);
         setFile(null);
         setDepartments('');
+        setCode('')
     }
 
     useEffect(() => {
@@ -149,6 +185,12 @@ const Tenants: React.FC = () => {
                                 <Input placeholder="" name="departments" id="name" value={departments || ''} onChange={handleInputDep} />
                             </InputGroup>
                         </FormControl>
+                        <FormControl id="code" flex={1}>
+                            <FormLabel>Code</FormLabel>
+                            <InputGroup borderColor="#E0E1E7">
+                                <Input placeholder="" name="code" id="code" value={code || ''} onChange={handleInputCode} />
+                            </InputGroup>
+                        </FormControl>                        
                         <FormControl id="logo" flex={1}>
                             <InputGroup>
                                 <Flex gap={2}>
@@ -159,14 +201,28 @@ const Tenants: React.FC = () => {
                                         </Flex>
                                     </Box>
                                     <Button colorScheme={'blue'} variant='outline' onClick={cancelHandle}>Cancel</Button>
-                                    <Button colorScheme={'blue'} onClick={saveRequest}>{
+                                    <Button 
+                                        isLoading={loading}
+                                        colorScheme={'blue'} 
+                                        loadingText='Saving'
+                                        onClick={saveRequest}
+                                        spinnerPlacement='start'
+                                        >{
                                         tenant?.id ? <Text>Update Client</Text> : <Text>Add Client</Text>
                                     }</Button>
                                 </Flex>
-
-
                             </InputGroup>
                         </FormControl>
+                    </Flex>
+                    <Flex mt={2}>
+                        <FormControl id="code" flex={1}>
+                            <InputGroup borderColor="#E0E1E7" h={10} >
+                                <Checkbox 
+                                    isChecked={tenant?.export}
+                                    onChange={(e) => setCheckedItems(e.target.checked)}
+                                >Export billing report</Checkbox>
+                            </InputGroup>
+                        </FormControl>  
                     </Flex>
                 </Box>
                 <Box>
@@ -177,6 +233,7 @@ const Tenants: React.FC = () => {
                                     <Th>Name</Th>
                                     <Th>Created</Th>
                                     <Th>Departments</Th>
+                                    <Th>Code</Th>
                                     <Th>Edit</Th>
                                 </Tr>
                             </Thead>
@@ -196,12 +253,17 @@ const Tenants: React.FC = () => {
                                             {client.created && transfromTimestamp(client.created as Timestamp)}
                                         </Td>
                                         <Td>
-                                            {client?.departments.join(', ')}
+                                            {client?.departments?.join(', ')}
                                         </Td>
                                         <Td>
-                                            <Button onClick={() => {
+                                            {client?.code}
+                                        </Td>
+
+                                        <Td>
+                                            <Button size='sm' variant={'outline'} colorScheme="blue" leftIcon={<AiOutlineEdit />} onClick={() => {
                                                 setTenant({ ...client });
                                                 setDepartments(client.departments?.join(', ') || '');
+                                                setCode(client.code);
                                             }}>Edit</Button>{' '}
                                         </Td>
                                     </Tr>

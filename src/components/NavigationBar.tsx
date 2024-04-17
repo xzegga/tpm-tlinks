@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     useColorMode,
     useColorModeValue,
@@ -15,23 +15,26 @@ import { useAuth } from '../context/AuthContext';
 import Navlnk from './NavLnk';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../hooks/useGlobalStore';
+import { getImageUrl, getTenantBySlug } from '../data/Tenant';
+import Logo from '../assets/logo.png';
 
 const NavigationBar: React.FC = () => {
     const { toggleColorMode } = useColorMode()
     const { logout } = useAuth()
-    const { currentUser: currentUser } = useStore();
-    const ImportedIconRef = useRef<React.FC<React.SVGProps<SVGElement>>>();
-    const IsotipoRef = useRef<React.FC<React.SVGProps<SVGElement>>>();
+    const { currentUser, setState } = useStore();
+    const [logo, setLogo] = useState<string | null>();
+    const Darkmode = useColorModeValue(<FaSun />, <FaMoon />)
+    const DarkColor = useColorModeValue('gray.100', 'gray.700')
 
     useEffect(() => {
         const importSvgIcon = async (): Promise<void> => {
             try {
-                const { default: SvgLogo } = (await import(`../assets/${currentUser.tenant}-logo.svg?react`));
-                ImportedIconRef.current = SvgLogo;
-
-                const { default: SvgIso } = (await import(`../assets/${currentUser.tenant}-isotipo.svg?react`));
-                IsotipoRef.current = SvgIso
-                console.log(IsotipoRef.current)
+                const tenant = await getTenantBySlug(currentUser.tenant)
+                if(tenant) setState({tenant})
+                if (tenant?.image) {
+                    const src = await getImageUrl(tenant.image);
+                    if (src) setLogo(src);
+                }
                 // svgr provides ReactComponent for given svg path
             } catch (err) {
                 console.error(err);
@@ -40,8 +43,9 @@ const NavigationBar: React.FC = () => {
 
 
         if (currentUser?.tenant) {
-            console.log('something')
             importSvgIcon();
+        } else {
+            setLogo(null);
         }
 
     }, [currentUser]);
@@ -53,15 +57,10 @@ const NavigationBar: React.FC = () => {
         await logout()
         navigate('/login', { replace: true })
     }
-
-
-    const Logo = ImportedIconRef.current;
-    const Isotipo = IsotipoRef.current;
-
-    return (
-        <Box
+    return (<>
+        {currentUser?.tenant ? <Box
             borderBottom='2px'
-            borderBottomColor={useColorModeValue('gray.100', 'gray.700')}
+            borderBottomColor={DarkColor}
             mb={4}
             py={4}
         >
@@ -71,18 +70,15 @@ const NavigationBar: React.FC = () => {
                 mx='auto'
                 spacing={4}
             >
-                <Image src="https://translationlinks.com/img/logo.png" maxH="50px" />
+                <Image src={Logo} maxH="50px" />
                 <Spacer />
                 {currentUser && (
                     <>
                         <Flex align='center' justify='left'>
 
-                            <Flex alignItems={'center'} mr={10}>
+                            <Flex alignItems={'center'} mr={4}>
                                 <Box mr={2}>
-                                    {Logo && <Logo />}
-                                </Box>
-                                <Box mt={5} ml={-2} >
-                                    {Isotipo && <Isotipo />}
+                                    <>{logo && <Image src={logo} maxH={65} />}</>
                                 </Box>
                             </Flex>
 
@@ -98,14 +94,16 @@ const NavigationBar: React.FC = () => {
                 )}
                 <IconButton
                     variant='ghost'
-                    icon={useColorModeValue(<FaSun />, <FaMoon />)}
+                    icon={Darkmode}
                     onClick={toggleColorMode}
                     aria-label='toggle-dark-mode'
                 />
 
 
             </HStack>
-        </Box>
+        </Box> : null}
+    </>
+
     );
 };
 

@@ -3,7 +3,6 @@ import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import React, { useEffect } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import Status from '../../components/Status';
-import { useAuth } from '../../context/AuthContext';
 import { db } from '../../utils/init-firebase';
 import { storage } from '../../utils/init-firebase';
 import { ref, getDownloadURL, getBlob } from 'firebase/storage';

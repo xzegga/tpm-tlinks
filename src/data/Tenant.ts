@@ -1,4 +1,4 @@
-import { Timestamp, addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { Timestamp, addDoc, collection, deleteDoc, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import { Tenant } from '../models/clients';
 import { db, storage } from '../utils/init-firebase';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
@@ -18,8 +18,10 @@ export async function saveTenant(tenant: Tenant, file?: File | null) {
         const tenantRef = await addDoc(tenantDoc, {
             created: created,
             name: tenant.name,
-            slug: tenant.slug,
-            departments: tenant.departments,
+            slug: tenant.slug || '',
+            departments: tenant.departments || [],
+            code: tenant.code,
+            export: tenant.export,
             ...(uploadTask ? { image: uploadTask?.metadata.fullPath } : {})
         });
 
@@ -30,7 +32,6 @@ export async function saveTenant(tenant: Tenant, file?: File | null) {
 }
 
 export const getAllTenants = async (): Promise<Tenant[]> => {
-    console.log('get Tenants');
     const tenantsCollection = collection(db, 'tenants');
     const querySnapshot = await getDocs(tenantsCollection);
     const tenants: Tenant[] = querySnapshot.docs.map((doc) => {
@@ -40,12 +41,42 @@ export const getAllTenants = async (): Promise<Tenant[]> => {
             name: data.name,
             slug: data.slug,
             departments: data.departments,
+            code: data.code,
             created: data.created, // Optional property
-            image: data.image || ''
+            image: data.image || '',
+            export: data.export || false
         } as Tenant;
     });
 
     return tenants;
+};
+
+export const getTenantBySlug = async (slug: string): Promise<Tenant | null> => {
+    try {
+        const tenantsCollection = collection(db, 'tenants');
+        const querySnapshot = await getDocs(query(tenantsCollection, where('slug', '==', slug)));
+
+        if (querySnapshot.empty) {
+            return null; // No tenant found with the given slug
+        }
+
+        const tenantDoc = querySnapshot.docs[0];
+        const tenantData = tenantDoc.data();
+
+        return {
+            id: tenantDoc.id,
+            name: tenantData.name,
+            slug: tenantData.slug,
+            departments: tenantData.departments,
+            created: tenantData.created,
+            code: tenantData.code,
+            image: tenantData.image || '',
+            export: tenantData.export || false
+        } as Tenant;
+    } catch (error) {
+        console.error('Error fetching tenant:', error);
+        throw error; // Re-throw the error for handling at a higher level
+    }
 };
 
 export const getImageUrl = async (fullPath: string): Promise<string | null> => {
@@ -69,7 +100,9 @@ export async function updateTenant(tenant: Tenant, file?: File | null) {
 
         const updatedData: any = {
             name: tenant.name,
-            departments: tenant.departments
+            departments: tenant.departments,
+            code: tenant.code,
+            export: tenant.export || false
         };
 
         // Optionally update image if a new file is provided

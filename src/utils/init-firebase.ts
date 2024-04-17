@@ -19,3 +19,9 @@ export const auth = getAuth(app);
 export const functions = getFunctions(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+
+// if(location.hostname === 'localhost') {
+//   functions.customDomain = 'http://localhost:5001/tpm-tlinks/us-central1';
+// }
+

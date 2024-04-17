@@ -67,7 +67,6 @@ const DropZone: React.FC<DropZoneProps> = ({ setFileList, targetLanguage = 'Span
     });
 
     const openFileWindows = ()=>{
-        console.log('open')
         open();
     }
     const openModal = (file: File) => {

@@ -1,9 +1,11 @@
-import { Table, Thead, Tr, Th, Tbody, Td, Center, Spinner, Flex } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
-import { ProjectObject } from '../../models/project';
-import ProjectRow from './ProjectRow';
+
+import { Box, Center, Flex, Spinner, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+
 import { useStore } from '../../hooks/useGlobalStore';
+import { ProjectObject } from '../../models/project';
 import { ROLES } from '../../models/users';
+import ProjectRow from './ProjectRow';
 
 interface ProjectListTableProps {
     projects: ProjectObject[];
@@ -12,7 +14,7 @@ interface ProjectListTableProps {
 
 const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removeProject }) => {
     const { currentUser } = useStore();
-    const { status, loading } = useStore()
+    const { status, loading, loadingMore } = useStore()
 
     const [urgentProjects, setUrgentProjects] = useState<ProjectObject[]>([]);
     const [commonProjects, setCommonProjects] = useState<ProjectObject[]>([]);
@@ -30,8 +32,22 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
     }, [projects])
 
     return (
-        <>
-            {!loading ? <>
+        <Box position={'relative'}>
+            {!loading || loadingMore ? <>
+                {loadingMore && <Flex 
+                    h={'100%'}
+                    style={{
+                        position: 'absolute',
+                        left: 0, right: 0, top: 0, bottom: 0,
+                        width: '100%',
+                        height: '100%',
+                        textAlign: 'center',
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                        zIndex: 10
+                    }}
+                    position={'absolute'} 
+                    alignItems={'center'}
+                ><Spinner size='xl' mx={'auto'} /></Flex>}
                 {urgentProjects.length ?
                     <Table variant='simple' mt='5'>
                         <Thead>
@@ -84,10 +100,12 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                             </Td></Tr> : null}
                         </Tbody>
                     </Table >
-                    : null}</>: 
-                    <Flex h={'500px'} justifyContent={'center'} alignItems={'center'}><Spinner size='xl' /></Flex>}
+                    : null}
+                </>: 
+                    <Flex h={'500px'} justifyContent={'center'} alignItems={'center'}><Spinner size='xl' /></Flex>
+                }
 
-        </>
+        </Box>
     );
 };
 

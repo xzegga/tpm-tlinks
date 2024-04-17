@@ -42,7 +42,6 @@ const autoSizeColumns = (ws: XLSX.WorkSheet): XLSX.WorkSheet => {
         const range = XLSX.utils.decode_range(ws['!ref']);
         const last = XLSX.utils.encode_col(range.e.c);
 
-        console.log(ws);
         for (let row = range.s.r; row <= range.e.r; row++) {
             ws['!rows'] = ws['!rows'] || [];
             ws['!rows'][row] = { hpx: 20 + 2 };

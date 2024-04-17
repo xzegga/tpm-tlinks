@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth, UserWithRoles } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Box, Button, chakra, Container, FormControl, FormLabel, HStack, Input, Stack, useToast, Image } from '@chakra-ui/react'
 import { FaGoogle } from 'react-icons/fa';
@@ -9,46 +9,35 @@ import Card from '../components/Card';
 import useMounted from '../hooks/useMounted';
 import Loading from '../components/Loading';
 import { useStore } from '../hooks/useGlobalStore';
-import { LoggedUser } from '../store/initialGlobalState';
+import Logo from '../assets/logo.png';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast()
     const mounted = useMounted()
-    const { signInWithGoogle, login, currentUser = false } = useAuth()
+
+    const { signInWithGoogle, login } = useAuth()
 
     const [email, setEmail] = useState<string>('')
     const [password, setPassword] = useState<string>('')
+
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-    const { setState } = useStore();
-
-    const handleRedirectToOrBack = async () => {
-        const user = currentUser as UserWithRoles
-        if (user) {
-            // Read claims from the user object
-            const { claims } = await user.getIdTokenResult();
-
-            if (claims?.role) {
-                setState({
-                    currentUser: {
-                        uid: claims.user_id as string,
-                        role: claims.role as string,
-                        tenant: claims.tenant as string,
-                        department: claims.department as string,
-                        ...currentUser,
-                    } as LoggedUser
-                });
-
-                navigate(`/${claims?.role}/`, { replace: false })
-            }
-        }
-    }
+    const { currentUser } = useStore();
 
     useEffect(() => {
-        if (currentUser) {
-            handleRedirectToOrBack()
+        goToPage();
+    }, [])
+
+
+    useEffect(() => {
+        goToPage();
+    }, [currentUser])
+
+    const goToPage = ()=>{
+        if (currentUser?.uid && currentUser?.role) {
+            navigate(`/${currentUser?.role}/`, { replace: false })
         }
-    }, [currentUser]);
+    }
 
     const submit = async (e: any) => {
         e.preventDefault()
@@ -58,10 +47,7 @@ const Login: React.FC = () => {
 
         setIsSubmitting(true)
         login(email, password)
-            .then(() => {
-                handleRedirectToOrBack()
-            })
-            .catch((error: { message: any; }) => errorToast(error.message))
+            .catch(() => errorToast())
             .finally(() => {
                 mounted.current && setIsSubmitting(false)
             })
@@ -69,16 +55,14 @@ const Login: React.FC = () => {
 
     const loginWithGoogle = () => {
         signInWithGoogle()
-            .then((response) => {
-                console.log(response)
-                handleRedirectToOrBack();
-            })
-            .catch((error: { message: any; }) => errorToast(error.message));
+            .finally(() => {
+                mounted.current && setIsSubmitting(false)
+            });
     }
 
-    const errorToast = (error: any) => {
+    const errorToast = () => {
         toast({
-            description: error.message,
+            description: "Incorrect username or password, please check and try again",
             status: 'error',
             duration: 9000,
             isClosable: true,
@@ -88,15 +72,15 @@ const Login: React.FC = () => {
     return (
         <>
             {
-                currentUser === false ? (
+                isSubmitting ? (
                     <Loading />
-                ) : currentUser === null ? (
+                ) : !currentUser.uid ? (
                     <Box mb={16} h={'80vh'}>
                         <Container centerContent maxWidth={'440px'} w={'100%'} h={'100%'} >
                             <Card mx='auto' my={'auto'} >
 
                                 <Container centerContent pt={'10px'} pb={'30px'} >
-                                    <Image src="https://translationlinks.com/img/logo.png" minW="300px" />
+                                    <Image src={Logo} minW="300px" />
                                 </Container>
 
                                 <chakra.form

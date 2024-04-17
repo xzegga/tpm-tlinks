@@ -21,7 +21,10 @@ export function createStore<Store>(initialState: Store) {
       ...state,
       setState: (newState: Partial<Store>) => {
         setLocalStore(newState);
-        set((st) => ({ ...st, ...newState }));
+        set((st) => {
+          // console.log({newState});
+          return { ...st, ...newState }
+        });
       },
     }))
   );

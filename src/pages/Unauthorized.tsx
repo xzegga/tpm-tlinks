@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import Navlnk from '../components/NavLnk';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../assets/logo.png';
 
 const Unauthorized: React.FC = () => {
     const { logout } = useAuth()
@@ -22,7 +23,7 @@ const Unauthorized: React.FC = () => {
                 <Card mx='auto' my={'auto'} >
 
                     <Container centerContent pt={'10px'} pb={'30px'} >
-                        <Image src="https://translationlinks.com/img/logo.png" minW="300px" />
+                        <Image src={Logo} minW="300px" />
                     </Container>
 
                     <Container centerContent pt={'10px'} pb={'30px'} >

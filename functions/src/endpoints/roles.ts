@@ -14,7 +14,7 @@ export default async function setRoles(request: CallableRequest<any>) {
   const {email, customClaims, token} = request.data;
 
   if (!email || !customClaims || !token) {
-    throw new HttpsError("invalid-argument", "Missing required fields");
+    return new HttpsError("invalid-argument", "Missing required fields");
   }
 
   const auth = getAuth();
@@ -31,10 +31,11 @@ export default async function setRoles(request: CallableRequest<any>) {
       ...customClaims,
     });
 
-    logger.info(`Successfully assigned custom claims to user ${user.uid}`);
     return {message: "Claims assigned successfully"};
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error assigning claims to user ${email}:`, error);
-    throw new HttpsError("internal", "Failed to assign claims");
+    return new HttpsError(
+      "internal", `Failed to assign claims: (${error.message})`
+    );
   }
 }

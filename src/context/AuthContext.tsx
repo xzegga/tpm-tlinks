@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { auth, db } from '../utils/init-firebase'
+import React, { createContext, useContext, useEffect } from 'react'
+import { auth} from '../utils/init-firebase'
 import firebase, {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -11,8 +11,10 @@ import firebase, {
   confirmPasswordReset
 } from 'firebase/auth'
 import { apiUrl } from '../utils/config';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { ROLES } from '../models/users';
+import { useStore } from '../hooks/useGlobalStore';
+import { LoggedUser, initialGlobalState } from '../store/initialGlobalState';
+import { getUserById } from '../data/users';
 
 export type User = firebase.User | null;
 
@@ -23,8 +25,7 @@ type Roles = {
 export type UserWithRoles = User & Roles;
 
 type ContextState = {
-  currentUser: UserWithRoles | null | undefined,
-  signInWithGoogle: () => Promise<firebase.UserCredential>,
+  signInWithGoogle: () => Promise<firebase.UserCredential | undefined>,
   login: (...args: any[]) => Promise<firebase.UserCredential>,
   register: (...args: any[]) => Promise<firebase.UserCredential>,
   logout: (...args: any[]) => Promise<void>,
@@ -32,10 +33,7 @@ type ContextState = {
   resetPassword: (...args: any[]) => Promise<void>,
 }
 
-let currentUser;
-
 export const AuthContext = createContext<ContextState>({
-  currentUser
 } as ContextState)
 
 export const useAuth = () => useContext(AuthContext)
@@ -45,41 +43,13 @@ export interface AuthContextProviderProps {
 }
 
 export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ children }) => {
-
-  const [currentUser, setCurrentUser] = useState<UserWithRoles | null | undefined>(undefined)
-
+  const { setState, currentUser } = useStore();
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      updateUser(currentUser as UserWithRoles);
+    const unsubscribe = onAuthStateChanged(auth, (usr) => {
+      loginSuccess(usr);
     })
     return () => unsubscribe()
   }, [])
-
-  const updateUser = async (user: UserWithRoles) => {
-    if (user) {
-      const userDetails = await getRoles(user);
-      if (!userDetails) {
-        await setDoc(doc(db, 'users', user.uid), {
-          name: user.displayName,
-          email: user.email,
-          created: Timestamp.now(),
-          photoUrl: user.photoURL,
-          role: 'unauthorized',
-          tenant: 'fiuFtXRQ73mmgUwnRwRE',
-          department: '',
-        })
-      }
-      user.role = userDetails?.role || 'unauthorized';
-    }
-    setCurrentUser(user);
-  }
-
-  const getRoles = async (user: UserWithRoles) => {
-    const userRef = doc(db, 'users', user.uid)
-    const userData = await getDoc(userRef)
-    return userData.data();
-  }
-
 
   const login = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password)
@@ -100,22 +70,55 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
   }
 
   const logout = () => {
+    setState({...initialGlobalState})
     return signOut(auth)
   }
 
-  const signInWithGoogle = () => {
+  const signInWithGoogle = async (): Promise<firebase.UserCredential | undefined> => {
     const provider = new GoogleAuthProvider()
-    return signInWithPopup(auth, provider)
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    try {
+      return await signInWithPopup(auth, provider)
+    } catch (error: any) {
+      console.log("Incorect user or password or", error);
+    }
+
+  }
+
+  const loginSuccess = async (usr: any) => {
+    if (usr) {
+      // Read claims from the user object
+      
+      const { claims } = await usr.getIdTokenResult();
+      if (claims) {
+        const user = {
+          ...currentUser,
+          name: usr.displayName,
+          photoUrl: usr.photoURL,
+          email: usr.email,
+          uid: usr.uid,
+          role: claims.role || ROLES.Unauthorized,
+          tenant: claims.tenant,
+          department: claims.department,
+        } as LoggedUser
+        console.log({usr, user})
+        setState({
+          currentUser: { ...user, token: usr.accessToken }
+        });
+
+        await getUserById(user);
+      }
+    }
   }
 
   const value: ContextState = {
-    currentUser,
     signInWithGoogle,
     login,
     register,
     logout,
     forgotPassword,
-    resetPassword
+    resetPassword,
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

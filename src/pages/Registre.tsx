@@ -114,7 +114,6 @@ const Registre: React.FC = () => {
                     leftIcon={<FaGoogle />}
                     onClick={() =>
                         signInWithGoogle()
-                            .then((user: any) => console.log(user))
                             .catch((e: { message: any; }) => console.log(e.message))
                     }
                 >

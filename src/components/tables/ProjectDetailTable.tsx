@@ -1,18 +1,15 @@
-import {
-    Table, Tbody, Tr, Td, Badge, Flex, Center, Text, FormControl,
-    Textarea,
-    Box,
-    Input,
-    Spinner
-} from "@chakra-ui/react";
-import { Timestamp } from "firebase/firestore";
-import { ProjectObject } from "../../models/project";
+import { Timestamp } from 'firebase/firestore';
 
-import { transfromTimestamp } from "../../utils/helpers";
-import Flag from "../Flag";
-import useProjectExtras from "../../hooks/useProjectExtras";
-import { ROLES } from "../../models/users";
-import { useStore } from "../../hooks/useGlobalStore";
+import {
+    Badge, Box, Center, Flex, FormControl, Input, Spinner, Table, Tbody, Td, Text, Textarea, Tr
+} from '@chakra-ui/react';
+
+import { useStore } from '../../hooks/useGlobalStore';
+import useProjectExtras from '../../hooks/useProjectExtras';
+import { ProjectObject } from '../../models/project';
+import { ROLES } from '../../models/users';
+import { transfromTimestamp } from '../../utils/helpers';
+import Flag from '../Flag';
 
 export interface ProjectTableProps {
     project: ProjectObject;

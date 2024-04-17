@@ -1,4 +1,5 @@
 import { User } from "../context/AuthContext";
+import { Tenant } from "../models/clients";
 import { ROLES } from "../models/users";
 
 export const localStorageKeys = [];
@@ -11,6 +12,10 @@ export type LoggedUser = {
   tenant: string,
   role: Role,
   department: string,
+  name: string,
+  photoUrl: string,
+  email: string,
+  token: string,
 } & User;
 
 export const initialGlobalState = {
@@ -20,5 +25,8 @@ export const initialGlobalState = {
   status: 'Active',
   pagination: '20',
   loading: false,
+  loadingMore: false,
   currentUser: {} as LoggedUser,
+  tenant: {} as Tenant,
+  tenantQuery: '',
 };

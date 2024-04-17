@@ -1,48 +1,25 @@
-import {
-    Container,
-    Flex,
-    Box,
-    Heading,
-    Spacer,
-    Link,
-    Center,
-    useToast,
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Button,
-    FormControl,
-    FormLabel,
-    Select,
-    Input,
-    Tag,
-    TagLabel,
-    Text
-} from '@chakra-ui/react';
-import {
-    query, collection, onSnapshot, limit, DocumentData, QueryDocumentSnapshot,
-    startAfter, orderBy, where, Timestamp, QueryFieldFilterConstraint, getCountFromServer
-} from 'firebase/firestore';
-import React, { useEffect, useMemo } from 'react';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import React, { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { AiOutlineFileExcel } from 'react-icons/ai';
 import { useNavigate } from 'react-router-dom';
+
+import {
+    AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader,
+    AlertDialogOverlay, Box, Button, Center, Container, Flex, FormControl, FormLabel, Heading,
+    Input, Link, Select, Spacer, Tag, TagLabel, Text, useToast
+} from '@chakra-ui/react';
+
 import NavLnk from '../../components/NavLnk';
 import ProjectListTable from '../../components/tables/ProjectListTable';
-
-import { db } from '../../utils/init-firebase';
-import { allStatuses, statuses, monthNames, defaultStatuses, billingStatuses } from '../../utils/value-objects';
-
-import { lastDayOfMonth, endOfDay } from 'date-fns';
-import { generateYears } from '../../utils/helpers';
+import TenantDropdown from '../../components/TenantDropdown';
 import { deleteProject } from '../../data/Projects';
-import { ProjectObject, Project } from '../../models/project';
-import { AiOutlineFileExcel } from 'react-icons/ai';
-import { exportToExcel } from '../../utils/export';
-import useProjectExtras from '../../hooks/useProjectExtras';
 import { useStore } from '../../hooks/useGlobalStore';
+import useProjectExtras from '../../hooks/useProjectExtras';
+import { ProjectObject } from '../../models/project';
 import { ROLES } from '../../models/users';
+import { exportToExcel } from '../../utils/export';
+import { generateYears } from '../../utils/helpers';
+import { allStatuses, monthNames } from '../../utils/value-objects';
 
 const months = [
     "January", "February", "March", "April", "May", "June",
@@ -50,41 +27,34 @@ const months = [
 ]
 
 const Dashboard: React.FC = () => {
-    const { currentUser } = useStore();
     const navigate = useNavigate();
-
-    const { pagination, status, monthSelected, yearSelected, setState } = useStore((state) => (
-        {
-            pagination: state.pagination,
-            status: state.status,
-            monthSelected: state.monthSelected,
-            yearSelected: state.yearSelected,
-            loading: state.loading,
-            setState: state.setState
-        }
-    ))
-
-    const [projects, setProjects] = React.useState<ProjectObject[]>([]);
-    const [lastDoc, setLastDoc] = React.useState<QueryDocumentSnapshot<DocumentData>>();
-    const [request, setRequest] = React.useState<string>('');
-    const [requestdb, setRequestdb] = React.useState<string>('');
-    const [wereStatement, setWereStatement] = React.useState<{
-        wereStatus: QueryFieldFilterConstraint,
-        wereStart: QueryFieldFilterConstraint,
-        wereEnds: QueryFieldFilterConstraint,
-        wereRequest: QueryFieldFilterConstraint | null,
-        count: number,
-    }>();
-
     const toast = useToast();
-    const [isOpen, setIsOpen] = React.useState(false);
-    const onClose = () => setIsOpen(false);
-    const cancelRef = React.useRef(null);
-    const [project, setProject] = React.useState<ProjectObject>();
+    const cancelRef = useRef(null);
+
+    const {
+        tenant,
+        currentUser,
+        pagination,
+        status,
+        monthSelected,
+        yearSelected,
+        tenantQuery,
+        setState } = useStore()
+
+    const [projects, setProjects] = useState<ProjectObject[]>([]);
+    const [project, setProject] = useState<ProjectObject>();
     const { debounce } = useProjectExtras(project);
 
+    const [lastDoc, setLastDoc] = useState<string>();
+    const [request, setRequest] = useState<string>('');
+    const [requestdb, setRequestdb] = useState<string>('');
+    const [count, setCount] = useState<number>()
+    const [isOpen, setIsOpen] = useState(false);
+
+    const onClose = () => setIsOpen(false);
+
     const fetchMore = () => {
-        queryProjects(lastDoc);
+        getProjectQuery(false);
     };
 
     const removeProject = (project: ProjectObject) => {
@@ -115,157 +85,92 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const handleFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleFilter = (e: ChangeEvent<HTMLSelectElement>) => {
         setLastDoc(undefined);
         setState({ status: e.target.value });
     };
 
-    const handleFilterDate = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleFilterDate = (e: ChangeEvent<HTMLSelectElement>) => {
         setLastDoc(undefined);
         setState({ monthSelected: Number(e.target.value) })
     };
 
     useEffect(() => {
-        queryProjects(lastDoc, true);
+        getProjectQuery(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [wereStatement]);
-
-    useEffect(() => {
-        createWhere();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [monthSelected, yearSelected, status, requestdb, pagination]);
+    }, [monthSelected, yearSelected, status, requestdb, pagination, tenantQuery]);
 
     const setRequestDb = (req: string) => {
         setRequestdb(req);
     }
 
-    const debouncedHandleRequestChange = useMemo(() => debounce(setRequestDb, 300), []);
+    const getProjectQuery = async (
+        newQuery: boolean = false
+    ) => {
+        try {
+            if (currentUser) {
+                setState({ loading: true, loadingMore: true });
+                const functions = getFunctions();
+                const getAllProjets = httpsCallable(functions, 'getProjects');
 
-    const createWhere = async () => {
-
-        setState({ loading: true });
-        if (currentUser) {
-            // Where Status
-            let wereStatus;
-
-            switch (status) {
-                case 'All':
-                    wereStatus = where('status', 'in', statuses);
-                    break;
-                case 'Active':
-                    wereStatus = where('status', 'in', defaultStatuses);
-                    break;
-                case 'Billing':
-                    wereStatus = where('status', 'in', billingStatuses);
-                    break;
-                case 'Quoted':
-                    wereStatus = where('billed', '>', 0);
-                    break;
-                default:
-                    wereStatus = where('status', '==', status);
-            }
-            // Where Month
-
-            const startOfMonth = monthSelected >= 0 ? new Date(yearSelected, monthSelected, 1) : new Date(yearSelected, 0, 1);
-
-            const endOfMonth = monthSelected >= 0 && startOfMonth ? endOfDay(lastDayOfMonth(startOfMonth)) : new Date(yearSelected, 11, 31);
-
-            const wereStart = where('created', '>=', Timestamp.fromDate(startOfMonth));
-            const wereEnds = where('created', '<=', Timestamp.fromDate(endOfMonth));
-            const wereRequest = requestdb !== '' ? where('requestNumber', '==', requestdb) : null;
-
-            const countQuery = query(collection(db, "projects"), wereStatus, wereStart, wereEnds, orderBy('created', 'desc'));
-            const snapshot = await getCountFromServer(countQuery);
-
-            setWereStatement({
-                wereStatus,
-                wereStart,
-                wereEnds,
-                wereRequest,
-                count: snapshot.data().count
-            });
-            if (snapshot.data().count === 0) setState({ loading: false });
-        }
-    }
-
-
-    const queryProjects = (lastDoc: QueryDocumentSnapshot<DocumentData> | undefined, newQuery = false) => {
-        if (currentUser && wereStatement) {
-            const {
-                wereStatus,
-                wereStart,
-                wereEnds,
-                wereRequest,
-                count
-            } = wereStatement;
-
-            if (count === 0) {
-                setProjects([] as ProjectObject[]);
-                return;
-            }
-            if (count > 0) {
-                const paging = pagination !== 'All' ? Number(pagination) : count;
-
-                if (lastDoc && !newQuery && paging) {
-                    const queryWithLast = !wereRequest ? query(
-                        collection(db, 'projects'),
-                        limit(paging),
-                        wereStatus,
-                        wereStart,
-                        wereEnds,
-                        orderBy('created', 'desc'),
-                        startAfter(lastDoc)
-                    ) : query(
-                        collection(db, 'projects'),
-                        wereRequest,
-                        limit(paging),
-                        orderBy('created', 'desc'),
-                    );
-
-                    const unsubscribe = onSnapshot(queryWithLast, (querySnapshot) => {
-                        const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
-                        setProjects([
-                            ...projects,
-                            ...querySnapshot.docs.map((doc) => ({
-                                id: doc.id,
-                                data: doc.data() as Project
-                            }))
-                        ]);
-                        setLastDoc(lastDoc);
-                        setState({ loading: false });
-                        unsubscribe();
-                    });
-                } else {
-                    const queryFist = !wereRequest ? query(
-                        collection(db, 'projects'),
-                        wereStatus,
-                        wereStart,
-                        wereEnds,
-                        orderBy('created', 'desc'),
-                        limit(paging)) :
-                        query(
-                            collection(db, 'projects'),
-                            wereRequest,
-                            limit(paging),
-                            orderBy('created', 'desc')
-                        );
-
-                    const unsubscribe = onSnapshot(queryFist, (querySnapshot) => {
-                        const lastDoc = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : undefined;
-                        setProjects(
-                            querySnapshot.docs.map((doc) => ({
-                                id: doc.id,
-                                data: doc.data() as Project
-                            }))
-                        );
-                        setLastDoc(lastDoc);
-                        setState({ loading: false });
-                        unsubscribe();
-                    });
+                let tenant = null;
+                if (currentUser.role === ROLES.Admin) {
+                    tenant = tenantQuery && tenantQuery !== '' ? tenantQuery : currentUser.tenant;
                 }
 
+                const projectData: any = await getAllProjets({
+                    status,
+                    monthSelected,
+                    yearSelected,
+                    requestdb,
+                    lastDoc,
+                    newQuery,
+                    pagination,
+                    token: currentUser.token,
+                    tenant,
+                });
+                //if (currentUser.role === ROLES.Admin) {
+                    console.log({
+                        query: {
+                            status,
+                            monthSelected,
+                            yearSelected,
+                            requestdb,
+                            lastDoc,
+                            newQuery,
+                            pagination,
+                            token: currentUser.token,
+                        }
+                    })
+                    console.log({ user: currentUser })
+                    console.log({ results: projectData })
+                    console.log({ tenant })
+                //}
+
+                if (newQuery) {
+                    setProjects(projectData?.data?.projects || []);
+                } else {
+                    setProjects([
+                        ...projects,
+                        ...projectData?.data?.projects || []
+                    ]);
+                }
+
+                setLastDoc(projectData?.data.lastDoc || null);
+                setCount(projectData?.data?.count);
+                setState({ loading: false, loadingMore: false });
             }
 
+        } catch (error) {
+            // Handle error
+            toast({
+                title: 'Error getting projects',
+                description: 'There is an error getting the project list',
+                status: 'error',
+                duration: 9000,
+                isClosable: true
+            });
+            setState({ loading: false, loadingMore: false });
         }
     };
 
@@ -287,6 +192,13 @@ const Dashboard: React.FC = () => {
         exportToExcel(data, fileName)
     }
 
+    const handleRole = async (e: ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        setState({ tenantQuery: value })
+    }
+
+    const debouncedHandleRequestChange = useMemo(() => debounce(setRequestDb, 300), []);
+
     return (
         <>
             {currentUser && (
@@ -294,11 +206,21 @@ const Dashboard: React.FC = () => {
                     <Container maxW="container.lg" w={'container.lg'} overflowX="auto" py={4}>
                         <Flex mb="1" alignItems={'center'}>
                             <Heading size="md" whiteSpace={'nowrap'} pl={3}>
-                                Project List
+                                <Flex alignItems={'center'} gap={3}>
+                                    <Text>Project List</Text>
+                                    {currentUser.role === 'admin' || tenant.export &&
+                                        <TenantDropdown
+                                            value={tenantQuery || currentUser.tenant}
+                                            showAll={true}
+                                            showNone={false}
+                                            handleChange={handleRole} />
+                                    }
+                                </Flex>
                             </Heading>
                             <Spacer />
                             {currentUser.role === ROLES.Admin && (
                                 <Flex>
+
                                     <Link onClick={() => navigate('users', { replace: true })} colorScheme={'blue.700'} mr={5}>
                                         Manage Users
                                     </Link>
@@ -370,7 +292,7 @@ const Dashboard: React.FC = () => {
                                                         {s}
                                                     </option>
                                                 ))}
-                                                {currentUser.role ===  ROLES.Admin ?
+                                                {currentUser.role === ROLES.Admin ?
                                                     <option value={'Billing'}>
                                                         Billing
                                                     </option> : null
@@ -426,7 +348,7 @@ const Dashboard: React.FC = () => {
 
                                     </Box>
                                 ))}
-                                {currentUser.role ===  ROLES.Admin ?
+                                {currentUser.role === ROLES.Admin ?
                                     <Flex flex={1} alignContent={'flex-end'}>
                                         <Button
                                             size={'xs'}
@@ -444,10 +366,10 @@ const Dashboard: React.FC = () => {
                             <ProjectListTable projects={projects} removeProject={removeProject} />
                             <Spacer mt={10} />
                             <Center>
-                                Showing {projects.length} of {wereStatement?.count} projects
+                                Showing {projects.length} of {count} projects
                             </Center>
                             <Center>
-                                {wereStatement?.count && wereStatement?.count > projects.length && (
+                                {count && count > projects.length && (
                                     <Link onClick={fetchMore} color={'blue.700'}>
                                         Load More...
                                     </Link>
