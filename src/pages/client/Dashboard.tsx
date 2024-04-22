@@ -20,6 +20,8 @@ import { ROLES } from '../../models/users';
 import { exportToExcel } from '../../utils/export';
 import { generateYears } from '../../utils/helpers';
 import { allStatuses, monthNames } from '../../utils/value-objects';
+import { useAuth } from '../../context/AuthContext';
+import ChangeStatusSelector from '../../components/ChangeStatus';
 
 const months = [
     "January", "February", "March", "April", "May", "June",
@@ -30,7 +32,7 @@ const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast();
     const cancelRef = useRef(null);
-
+    const { validate } = useAuth();
     const {
         tenant,
         currentUser,
@@ -39,6 +41,8 @@ const Dashboard: React.FC = () => {
         monthSelected,
         yearSelected,
         tenantQuery,
+        selectedIds,
+        refresh,
         setState } = useStore()
 
     const [projects, setProjects] = useState<ProjectObject[]>([]);
@@ -62,10 +66,10 @@ const Dashboard: React.FC = () => {
         setIsOpen(true);
     };
 
-    const handleDeleteProject = () => {
+    const handleDeleteProject = async () => {
         if (currentUser && project) {
+            await validate();
             deleteProject(project.id);
-            // setProjects(projects.filter(p => p.id !== project.id));
 
             toast({
                 title: 'Project deleted',
@@ -100,6 +104,13 @@ const Dashboard: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [monthSelected, yearSelected, status, requestdb, pagination, tenantQuery]);
 
+    useEffect(() => {
+        if (refresh === true) {
+            setState({ refresh: false });
+            getProjectQuery(true);
+        }
+    }, [refresh])
+
     const setRequestDb = (req: string) => {
         setRequestdb(req);
     }
@@ -109,6 +120,7 @@ const Dashboard: React.FC = () => {
     ) => {
         try {
             if (currentUser) {
+                await validate();
                 setState({ loading: true, loadingMore: true });
                 const functions = getFunctions();
                 const getAllProjets = httpsCallable(functions, 'getProjects');
@@ -129,23 +141,6 @@ const Dashboard: React.FC = () => {
                     token: currentUser.token,
                     tenant,
                 });
-                //if (currentUser.role === ROLES.Admin) {
-                    console.log({
-                        query: {
-                            status,
-                            monthSelected,
-                            yearSelected,
-                            requestdb,
-                            lastDoc,
-                            newQuery,
-                            pagination,
-                            token: currentUser.token,
-                        }
-                    })
-                    console.log({ user: currentUser })
-                    console.log({ results: projectData })
-                    console.log({ tenant })
-                //}
 
                 if (newQuery) {
                     setProjects(projectData?.data?.projects || []);
@@ -199,6 +194,20 @@ const Dashboard: React.FC = () => {
 
     const debouncedHandleRequestChange = useMemo(() => debounce(setRequestDb, 300), []);
 
+    const onChangeStatusSuccess = (st: string) => {
+        const newProjectStatuses = projects.map((item) => (
+            {
+                ...item,
+                data: {
+                    ...item.data,
+                    ...(selectedIds.includes(item.id) && { status: st }),
+                }
+            }
+        ));
+        setProjects(newProjectStatuses);
+        setState({ selectedIds: [], status: st })
+    }
+
     return (
         <>
             {currentUser && (
@@ -211,8 +220,7 @@ const Dashboard: React.FC = () => {
                                     {currentUser.role === 'admin' || tenant.export &&
                                         <TenantDropdown
                                             value={tenantQuery || currentUser.tenant}
-                                            showAll={true}
-                                            showNone={false}
+                                            select={'all'}
                                             handleChange={handleRole} />
                                     }
                                 </Flex>
@@ -362,11 +370,23 @@ const Dashboard: React.FC = () => {
 
                             </Flex>
                         </Box>
+                        {currentUser.role === ROLES.Admin && selectedIds?.length ?
+                            <Box borderTop={1} borderTopColor={'black'} bgColor={'yellow.50'}
+                                color={'black'} overflow={'hidden'} mt={4}>
+                                <Flex alignItems={'center'} gap={3} py={2} px={4}
+                                >
+                                    <Text>Change Status</Text>
+                                    <ChangeStatusSelector ids={selectedIds} onSuccess={onChangeStatusSuccess} />
+                                </Flex>
+                            </Box>
+                            : null}
                         <Box>
-                            <ProjectListTable projects={projects} removeProject={removeProject} />
+                            <ProjectListTable
+                                projects={projects}
+                                removeProject={removeProject} />
                             <Spacer mt={10} />
                             <Center>
-                                Showing {projects.length} of {count} projects
+                                Showing {projects.length} of {count ? count : 0} projects
                             </Center>
                             <Center>
                                 {count && count > projects.length && (

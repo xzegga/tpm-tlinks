@@ -34,7 +34,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
     return (
         <Box position={'relative'}>
             {!loading || loadingMore ? <>
-                {loadingMore && <Flex 
+                {loadingMore && <Flex
                     h={'100%'}
                     style={{
                         position: 'absolute',
@@ -45,13 +45,14 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                         backgroundColor: 'rgba(255, 255, 255, 0.5)',
                         zIndex: 10
                     }}
-                    position={'absolute'} 
+                    position={'absolute'}
                     alignItems={'center'}
                 ><Spinner size='xl' mx={'auto'} /></Flex>}
                 {urgentProjects.length ?
                     <Table variant='simple' mt='5'>
                         <Thead>
                             <Tr>
+                                <Th px={0} pl={'15px'}></Th>
                                 <Th px={1} pl={'15px'}>Request</Th>
                                 <Th px={1} textAlign={'center'}>Project</Th>
                                 <Th px={1} textAlign={'center'}>Service</Th>
@@ -68,7 +69,9 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                         </Thead>
                         <Tbody>
                             {urgentProjects.map((project: ProjectObject) => (
-                                <ProjectRow key={project.id} project={project} removeProject={removeProject} />
+                                <ProjectRow key={project.id}
+                                    project={project}
+                                    removeProject={removeProject} />
                             ))}
                         </Tbody>
                     </Table >
@@ -77,6 +80,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                     <Table variant='simple' mt='5'>
                         <Thead>
                             <Tr>
+                                <Th px={0} pl={'15px'}></Th>
                                 <Th px={1} pl={'15px'}>Request</Th>
                                 <Th px={1} textAlign={'center'}>Project</Th>
                                 <Th px={1} textAlign={'center'}>Service</Th>
@@ -93,7 +97,10 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                         </Thead>
                         <Tbody>
                             {commonProjects.map((project: ProjectObject) => (
-                                <ProjectRow key={project.id} project={project} removeProject={removeProject} />
+                                <ProjectRow 
+                                    key={project.id}
+                                    project={project}
+                                    removeProject={removeProject} />
                             ))}
                             {projects.length === 0 ? <Tr><Td colSpan={6}>
                                 <Center>No projects found</Center>
@@ -101,9 +108,9 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                         </Tbody>
                     </Table >
                     : null}
-                </>: 
-                    <Flex h={'500px'} justifyContent={'center'} alignItems={'center'}><Spinner size='xl' /></Flex>
-                }
+            </> :
+                <Flex h={'500px'} justifyContent={'center'} alignItems={'center'}><Spinner size='xl' /></Flex>
+            }
 
         </Box>
     );

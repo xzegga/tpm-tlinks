@@ -28,5 +28,8 @@ export const initialGlobalState = {
   loadingMore: false,
   currentUser: {} as LoggedUser,
   tenant: {} as Tenant,
+  tenants: [] as Tenant[],
   tenantQuery: '',
+  selectedIds: [] as string[],
+  refresh: false,
 };

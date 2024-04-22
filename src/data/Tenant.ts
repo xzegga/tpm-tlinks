@@ -2,6 +2,7 @@ import { Timestamp, addDoc, collection, deleteDoc, doc, getDocs, query, updateDo
 import { Tenant } from '../models/clients';
 import { db, storage } from '../utils/init-firebase';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export async function saveTenant(tenant: Tenant, file?: File | null) {
     try {
@@ -31,24 +32,20 @@ export async function saveTenant(tenant: Tenant, file?: File | null) {
     }
 }
 
-export const getAllTenants = async (): Promise<Tenant[]> => {
-    const tenantsCollection = collection(db, 'tenants');
-    const querySnapshot = await getDocs(tenantsCollection);
-    const tenants: Tenant[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            name: data.name,
-            slug: data.slug,
-            departments: data.departments,
-            code: data.code,
-            created: data.created, // Optional property
-            image: data.image || '',
-            export: data.export || false
-        } as Tenant;
+export const getAllTenants = async (token: string): Promise<Tenant[]> => {
+    const functions = getFunctions();
+    const getAllTenants = httpsCallable(functions, 'getTenants');
+
+    const results = await getAllTenants({
+        token
     });
 
-    return tenants;
+    if (Array.isArray(results.data)) {
+        const tenants = results?.data.map((item) => item.data);
+        return tenants as Tenant[];
+    }
+
+    return [];
 };
 
 export const getTenantBySlug = async (slug: string): Promise<Tenant | null> => {

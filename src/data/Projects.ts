@@ -58,13 +58,8 @@ export const getCorrelativeID = async (code: string, project?: Project) => {
     const created: Timestamp | undefined = project?.created;
     const createdDate = created?.toDate() || new Date();
     const today = Timestamp.fromDate(new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()));
-    const q = query(
-        collection(db, 'projects'), 
-        where('created', '>=', today),
-        where('tenant', '==', project?.tenant),
-        where('department', '==', project?.department)
-    );
- 
+    const q = query(collection(db, 'projects'), where('created', '>=', today), where('tenant', '==', project?.tenant), where('department', '==', project?.department));
+
     const querySnapshot = await getDocs(q);
 
     // Build project id base on current date and correlative
@@ -177,3 +172,26 @@ export const updateWordCount = async (projectId: string, wordCount: number) => {
 //     await batch.commit();
 //     console.log('done')
 // };
+
+
+export const updateStatus = async (ids: string[], status: string) => {
+    // Initialize a Firestore write batch
+    const batch = writeBatch(db);
+
+    // Reference to the project collection
+    const projectsRef = collection(db, 'projects');
+
+    // Loop through each project ID and update its state field
+    ids.forEach((id) => {
+        const projectDocRef = doc(projectsRef, id);
+        batch.update(projectDocRef, { status });
+    });
+
+    try {
+        // Commit the batch operation
+        await batch.commit();
+        return {type: 'success', message: 'Batch update successful'};
+    } catch (error) {
+        return {type: 'error', message: 'Error updating projects'};
+    }
+};

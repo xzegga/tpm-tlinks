@@ -23,6 +23,7 @@ import { Tenant } from '../../models/clients';
 import { Doc } from '../../models/document';
 import { Project } from '../../models/project';
 import { ROLES } from '../../models/users';
+import { useAuth } from '../../context/AuthContext';
 
 const initialState: Project = {
   projectId: '',
@@ -38,51 +39,41 @@ const initialState: Project = {
   documents: [],
   isUrgent: false,
   tenant: '',
-  department: 'string'
+  department: ''
 };
 
 const AddProject: React.FC = () => {
   const [files, setFiles] = useState<Doc[]>([]);
   const [saving, setSaving] = useStateWithCallbackLazy<boolean>(false);
-  const [project, setProject] = useState<Project>(initialState);
   const { currentUser, tenant } = useStore();
+  const { validate } = useAuth();
+  const [project, setProject] = useState<Project>({
+    ...initialState,
+    tenant: tenant.slug,
+    department: currentUser.department
+  });
+
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const navigate = useNavigate();
 
-
   useEffect(() => {
     const fetchData = async () => {
-      const fetchedTenants = await getAllTenants();
+
+      const fetchedTenants = await getAllTenants(currentUser.token);
       setTenants(fetchedTenants);
-
-      const [first] = fetchedTenants;
-
-      setProject({
-        ...project,
-        tenant: first.slug,
-        ...(first?.departments?.length ? {
-          department: first.departments?.[0]
-        } : { department: 'all' }),
-      });
     };
 
     if (currentUser?.role === ROLES.Admin) {
       fetchData();
-    } else {
-      setProject({
-        ...project,
-        tenant: tenant.slug,
-        ...(tenant?.departments?.length ? {
-          department: tenant.departments[0]
-        } : { department: 'all' }),
-      });
-    };
+    }
+
   }, []);
 
   const saveRequest = async () => {
     if (!files) return;
 
     if (currentUser) {
+      await validate();
       setSaving(true, () => console.log);
       const langs = files.map((f) => [...f.target]);
       let multilingual = false;
@@ -179,7 +170,7 @@ const AddProject: React.FC = () => {
                                   <Select
                                     required
                                     name="tenant"
-                                    value={project.tenant || 'all'}
+                                    value={project.tenant}
                                     onChange={handleRole}
                                     color="black"
                                     backgroundColor={'white'}
@@ -205,17 +196,18 @@ const AddProject: React.FC = () => {
                                 <Select
                                   required
                                   name="department"
-                                  value={project.department || 'all'}
+                                  value={project.department}
                                   onChange={handleRole}
                                   color="black"
                                   backgroundColor={'white'}
                                   size="md"
                                   flex={1}
                                 >
-                                  <option value='all'>All</option>
+                                  
                                   {
                                     currentUser.role === ROLES.Admin ?
                                       <>
+                                        <option value='all'>All</option>
                                         {
                                           tenants && tenants.length ? <>
                                             {
@@ -244,7 +236,9 @@ const AddProject: React.FC = () => {
                                                 }
                                               </> : null
                                             }
-                                          </> : null
+                                          </> : <option value={currentUser.department}>
+                                            {currentUser.department}
+                                          </option>
                                         }
                                       </>
                                   }
@@ -258,7 +252,7 @@ const AddProject: React.FC = () => {
                                 <Input placeholder="Request Number" name="requestNumber" id="requestNumber" value={project.requestNumber} onChange={handleInput} />
                               </InputGroup>
                             </FormControl>
-                            
+
                             {currentUser.role === ROLES.Admin && (
                               <FormControl id="language_requested">
                                 <FormLabel>Created Date (Only Admin)</FormLabel>

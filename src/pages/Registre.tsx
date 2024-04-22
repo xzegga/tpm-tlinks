@@ -14,8 +14,9 @@ const Registre: React.FC = () => {
     const mounted = useRef(false)
 
     const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [password, setPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
 
     useEffect(() => {
         mounted.current = true
@@ -106,19 +107,19 @@ const Registre: React.FC = () => {
                         Login
                     </Button>
                 </Center>
-                <DividerWithText my={6}>OR</DividerWithText>
-                <Button
-                    variant='outline'
-                    w={'100%'}
-                    colorScheme='red'
-                    leftIcon={<FaGoogle />}
-                    onClick={() =>
-                        signInWithGoogle()
-                            .catch((e: { message: any; }) => console.log(e.message))
-                    }
-                >
-                    Sign in with Google
-                </Button>
+                    <DividerWithText my={6}>OR</DividerWithText>
+                    <Button
+                        variant='outline'
+                        w={'100%'}
+                        colorScheme='red'
+                        leftIcon={<FaGoogle />}
+                        onClick={() =>
+                            signInWithGoogle()
+                                .catch((e: { message: any; }) => console.log(e.message))
+                        }
+                    >
+                        Sign in with Google
+                    </Button>
             </Card>
         </>
     )

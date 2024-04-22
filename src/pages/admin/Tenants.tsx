@@ -22,7 +22,7 @@ const Tenants: React.FC = () => {
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [departments, setDepartments] = useState<string>('');
     const [code, setCode] = useState<string>('');
-    const [checked, setChecked] = useState<boolean>('');
+    const [checked, setChecked] = useState<boolean>();
     const [file, setFile] = useState<File | null>(null);
     const { currentUser, setState, loading } = useStore();
     const [images, setImages] = useState<Record<string, string | null>>({});
@@ -46,7 +46,7 @@ const Tenants: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const fetchedTenants = await getAllTenants();
+            const fetchedTenants = await getAllTenants(currentUser.token);
             setTenants(fetchedTenants);
         };
 
@@ -190,7 +190,7 @@ const Tenants: React.FC = () => {
                             <InputGroup borderColor="#E0E1E7">
                                 <Input placeholder="" name="code" id="code" value={code || ''} onChange={handleInputCode} />
                             </InputGroup>
-                        </FormControl>                        
+                        </FormControl>
                         <FormControl id="logo" flex={1}>
                             <InputGroup>
                                 <Flex gap={2}>

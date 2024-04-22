@@ -1,5 +1,5 @@
-import { Container, Flex, Box, Breadcrumb, BreadcrumbItem, Spacer, Text, Heading, Select, useToast, AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Button, CircularProgress } from '@chakra-ui/react';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { Container, Flex, Box, Breadcrumb, BreadcrumbItem, Spacer, Text, Heading, useToast, Button, CircularProgress } from '@chakra-ui/react';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import React, { useEffect } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import Status from '../../components/Status';
@@ -9,8 +9,6 @@ import { ref, getDownloadURL, getBlob } from 'firebase/storage';
 import fileDownload from 'js-file-download'
 import ProjectTable from '../../components/tables/ProjectDetailTable';
 import DocumentTable from '../../components/tables/DocumentTable';
-import { statuses } from '../../utils/value-objects';
-import { FaArchive } from 'react-icons/fa';
 import { GrDocumentZip } from 'react-icons/gr';
 import { ProjectObject } from '../../models/project';
 import { Document, DocumentObject, ProcessedDocument } from '../../models/document';
@@ -24,21 +22,18 @@ import Urgent from '../../assets/isUrgent.svg?react';
 import JSZip from 'jszip';
 import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
+import ChangeStatusSelector from '../../components/ChangeStatus';
+
 
 const jszip = new JSZip();
 
 const ProjectDetail: React.FC = () => {
     const { projectId } = useParams();
     const { currentUser } = useStore();
-
     const toast = useToast()
-    const [isOpen, setIsOpen] = React.useState(false)
-    const onClose = () => setIsOpen(false)
-    const cancelRef = React.useRef(null)
 
-    const [status, setStatus] = React.useState<string>('')
+
     const [saving, setSaving] = useStateWithCallbackLazy<boolean>(false);
-
     const [project, setProject] = React.useState<ProjectObject>();
     const [documents, setDocuments] = React.useState<DocumentObject[]>([]);
     const [processedDocuments, setProcessedDocuments] = React.useState<ProcessedDocument[]>([])
@@ -132,34 +127,6 @@ const ProjectDetail: React.FC = () => {
         }
     }
 
-    const handleChangeStatus = (status: string) => {
-        setStatus(status)
-        setIsOpen(true)
-    }
-
-    const changeStatus = async () => {
-        if (project) {
-            const response = await getProjectById(project?.id);
-
-            await setDoc(doc(db, 'projects', project.id), {
-                ...response.data,
-                status: status
-            })
-
-            // update project status
-            setProject({ ...project, data: { ...project.data, status: status } })
-
-            toast({
-                description: `Status for ${project.data.projectId} has been changed to ${status}`,
-                status: 'info',
-                duration: 9000,
-                isClosable: true,
-            })
-
-            setIsOpen(false)
-        }
-    }
-
     const uploadFile = async (
         files: FileList,
         document: DocumentObject | null = null,
@@ -243,15 +210,7 @@ const ProjectDetail: React.FC = () => {
                                 </Flex>
 
                                 {currentUser.role === ROLES.Admin && (
-                                    <Select
-                                        value={project.data.status}
-                                        onChange={(e) => handleChangeStatus(e.target.value)}
-                                        maxW={'150px'}
-                                    >
-                                        {statuses.map(status => (
-                                            <option key={status} value={status}>{status}</option>
-                                        ))}
-                                    </Select>
+                                    <ChangeStatusSelector setProject={setProject} project={project} />
                                 )}
                                 {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>
@@ -285,7 +244,7 @@ const ProjectDetail: React.FC = () => {
 
 
                                 {project?.data?.status === 'Completed' &&
-                                    <Button ml={3} leftIcon={<FaArchive />} colorScheme='orange' onClick={() => handleChangeStatus('Archived')}>Archive</Button>
+                                    <ChangeStatusSelector setProject={setProject} project={project} button={true}  />                                    
                                 }
                             </Flex>
                         </Flex>
@@ -323,32 +282,7 @@ const ProjectDetail: React.FC = () => {
                 </Container >
             )}
 
-            <AlertDialog
-                isOpen={isOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onClose}
-            >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                            Change Project Status
-                        </AlertDialogHeader>
-
-                        <AlertDialogBody>
-                            Are you sure? You can't undo this action afterwards.
-                        </AlertDialogBody>
-
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose}>
-                                Cancel
-                            </Button>
-                            <Button colorScheme={'blue'} onClick={changeStatus} ml={3}>
-                                Change to {status}
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
+            
         </>
     );
 };

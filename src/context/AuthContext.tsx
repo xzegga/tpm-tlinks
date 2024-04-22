@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect } from 'react'
-import { auth} from '../utils/init-firebase'
+import { auth } from '../utils/init-firebase'
 import firebase, {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -10,11 +10,11 @@ import firebase, {
   signOut,
   confirmPasswordReset
 } from 'firebase/auth'
-import { apiUrl } from '../utils/config';
+
 import { ROLES } from '../models/users';
 import { useStore } from '../hooks/useGlobalStore';
 import { LoggedUser, initialGlobalState } from '../store/initialGlobalState';
-import { getUserById } from '../data/users';
+import { getUserById, validateSession } from '../data/users';
 
 export type User = firebase.User | null;
 
@@ -31,6 +31,7 @@ type ContextState = {
   logout: (...args: any[]) => Promise<void>,
   forgotPassword: (...args: any[]) => Promise<void>,
   resetPassword: (...args: any[]) => Promise<void>,
+  validate: (...args: any[]) => Promise<void>,
 }
 
 export const AuthContext = createContext<ContextState>({
@@ -61,8 +62,27 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
 
   const forgotPassword = (email: string) => {
     return sendPasswordResetEmail(auth, email, {
-      url: `${apiUrl}login`,
+      url: `${getBaseUrl()}login`,
     })
+  }
+
+  const getBaseUrl = (): string => {
+    const currentUrl: string = window.location.href;
+    let protocolIndex: number = currentUrl.indexOf("://");
+    let startIndex: number;
+
+    if (protocolIndex !== -1) {
+      protocolIndex += 3; // Move past "://"
+      startIndex = currentUrl.indexOf("/", protocolIndex);
+      if (startIndex !== -1) {
+        return currentUrl.substring(0, startIndex + 1);
+      } else {
+        return currentUrl + "/";
+      }
+    } else {
+      // If "://" not found, return the original URL
+      return currentUrl;
+    }
   }
 
   const resetPassword = (oobCode: string, newPassword: string) => {
@@ -70,7 +90,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
   }
 
   const logout = () => {
-    setState({...initialGlobalState})
+    setState({ ...initialGlobalState })
     return signOut(auth)
   }
 
@@ -89,8 +109,9 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
   const loginSuccess = async (usr: any) => {
     if (usr) {
       // Read claims from the user object
-      
+
       const { claims } = await usr.getIdTokenResult();
+      console.log(claims)
       if (claims) {
         const user = {
           ...currentUser,
@@ -102,7 +123,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
           tenant: claims.tenant,
           department: claims.department,
         } as LoggedUser
-        console.log({usr, user})
+
         setState({
           currentUser: { ...user, token: usr.accessToken }
         });
@@ -112,6 +133,11 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     }
   }
 
+  const validate = async () => {
+    const valid = await validateSession(currentUser.token);
+    if (!valid) logout();
+  }
+
   const value: ContextState = {
     signInWithGoogle,
     login,
@@ -119,6 +145,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     logout,
     forgotPassword,
     resetPassword,
+    validate
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

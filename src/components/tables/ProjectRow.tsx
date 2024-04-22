@@ -5,7 +5,8 @@ import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 
 import {
-    Badge, Box, Flex, FormControl, IconButton, Input, Link, LinkBox, Spinner, Td, Text, Tooltip, Tr
+    Badge, Box, Checkbox, Flex, FormControl, IconButton, Input, Link, LinkBox, Spinner, Td, Text, Tooltip, Tr,
+    useToast
 } from '@chakra-ui/react';
 
 import Urgent from '../../assets/isUrgent.svg?react';
@@ -29,8 +30,8 @@ const stripped = {
 
 const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
     const navigate = useNavigate();
-    const { currentUser } = useStore();
-
+    const { currentUser, selectedIds, setState } = useStore();
+    const toast = useToast()
     const { status, loading: projectLoading } = useStore()
 
     const {
@@ -47,9 +48,40 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
         const timeStamp = new Timestamp(time._seconds, time._nanoseconds);
         return transfromTimestamp(timeStamp)
     }
+
+    const handleSelected = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+        const target = e.target as HTMLInputElement;
+        const isChecked = target.checked;
+
+        // Assuming your array is stored in a state variable called 'ids'
+        const index = selectedIds.indexOf(id);
+
+        if (isChecked && index === -1) {
+            if (selectedIds.length < 30) {
+                // If the checkbox is checked and the id doesn't exist in the array, add it
+                setState({ selectedIds: [...selectedIds, id] });
+            } else {
+                toast({
+                    description: `Only 30 projects can have their state changed at the same time.`,
+                    status: 'warning',
+                    duration: 9000,
+                    isClosable: true,
+                })
+            }
+
+        } else if (!isChecked && index !== -1) {
+            // If the checkbox is unchecked and the id exists in the array, remove it
+            const updatedIds = selectedIds.filter(item => item !== id);
+            setState({ selectedIds: updatedIds });
+        }
+    }
+
     return (
 
         <Tr cursor={'pointer'} _hover={{ bg: 'gray.100' }} style={project.data.status === 'Archived' ? stripped : {}}>
+            <Td px={0} pl={1}>
+                <Checkbox isChecked={selectedIds.includes(project.id)} onChange={(e) => handleSelected(e, project.id)}></Checkbox>
+            </Td>
             <LinkBox
                 as={Td}
                 onClick={() => {

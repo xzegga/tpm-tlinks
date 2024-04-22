@@ -1,29 +1,42 @@
 import { Select } from "@chakra-ui/react";
 import { useStore } from "../hooks/useGlobalStore"
 import { ROLES } from "../models/users";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Tenant } from "../models/clients";
 import { getAllTenants } from "../data/Tenant";
+import { useAuth } from "../context/AuthContext";
 
-export default function TenantDropdown(
-    { value, handleChange, disabled = false, showAll = false, showNone = true }: {
+export default function TenantDropdown({
+    value, handleChange,
+    disabled = false,
+    select = 'all'
+}:
+    {
         value: string;
         handleChange: (...args: any[]) => any;
         disabled?: boolean;
-        showAll?: boolean;
-        showNone?: boolean;
+        select?: string;
+        required?: boolean;
     }) {
 
-    const { currentUser } = useStore();
-    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const { currentUser, tenants, loading, setState } = useStore();
+    const { validate } = useAuth()
+
+    useEffect(() => {
+        if (tenants?.length) setState({ loading: false })
+    }, [tenants]);
 
     useEffect(() => {
         const fetchData = async () => {
-            const fetchedTenants = await getAllTenants();
-            setTenants(fetchedTenants);
+            setState({ loading: true })
+            await validate();
+            const fetchedTenants: Tenant[] = await getAllTenants(
+                currentUser.token,
+            );
+            setState({ tenants: fetchedTenants });
         };
 
-        if (currentUser?.role === ROLES.Admin) fetchData();
+        if (currentUser?.role === ROLES.Admin && !tenants.length && !loading) fetchData();
     }, []);
 
 
@@ -41,8 +54,8 @@ export default function TenantDropdown(
             flex={1}
             disabled={disabled}
         >
-            {showAll && <option value="all">All</option>}
-            {showNone && <option value="none">None</option>}
+            {select && <option
+                {...(select !== 'None' ? { value: select.toLowerCase() } : { value: '' })}>{select}</option>}
             {tenants && tenants.length
                 ?
                 <>

@@ -103,7 +103,6 @@ export default async function getProjectsData(
 
     return {projects: projectsData, lastDoc: nextLastDoc, count};
   } catch (error) {
-    console.log(error);
     logger.error("Error trying to apply selected filters", error);
     throw new HttpsError("internal", "Error getting projects");
   }
