@@ -25,3 +25,4 @@ dist-ssr
 *.sw?
 .firebase
 package-lock.json
+.env

@@ -149,6 +149,11 @@ const Tenants: React.FC = () => {
         fetchTenantImages();
     }, [tenants])
 
+
+    useEffect(()=>{
+        console.log(tenants)
+    }, [tenant])
+
     return <>
         {currentUser ?
             <Container maxW="full" mt={0} w={'container.lg'} overflow="hidden" width={'100%'}>

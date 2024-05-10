@@ -41,7 +41,7 @@ export const getAllTenants = async (token: string): Promise<Tenant[]> => {
     });
 
     if (Array.isArray(results.data)) {
-        const tenants = results?.data.map((item) => item.data);
+        const tenants = results?.data.map((item) => ({id: item.id, ...item.data}));
         return tenants as Tenant[];
     }
 
