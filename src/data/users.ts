@@ -9,10 +9,10 @@ export const getAllUsers = async () => {
     const usersCollection = collection(db, 'users');
     const querySnapshot = await getDocs(query(usersCollection));
 
-    const result = querySnapshot.docs.map(doc => ({
+    const result = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         data: doc.data()
-    }))
+    }));
     return result;
 };
 
@@ -27,7 +27,6 @@ export const getUserById = async (user: LoggedUser): Promise<void> => {
                 role: ROLES.Unauthorized
             });
         }
-
     } catch (error) {
         console.log('Error getting user by ID:', error);
     }
@@ -43,10 +42,9 @@ export const saveUser = async (token: string, user: any): Promise<any> => {
     });
 
     if (results?.data) {
-       return results.data
+        return results.data;
     }
 };
-
 
 export const validateSession = async (token: string): Promise<any> => {
     const functions = getFunctions();
@@ -55,8 +53,7 @@ export const validateSession = async (token: string): Promise<any> => {
     const results: any = await validateToken({
         token
     });
-
-    return results.data.valid
+    return results.data.valid;
 };
 
 export const removeUser = async (token: string, uid: string, id: string): Promise<any> => {
@@ -68,9 +65,8 @@ export const removeUser = async (token: string, uid: string, id: string): Promis
             uid,
             id
         });
-        return message
+        return message;
     } catch (error: any) {
         return error;
     }
-   
 };
