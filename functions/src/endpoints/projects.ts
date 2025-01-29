@@ -6,6 +6,7 @@ import getWereByStatus from "../were/were-by-status";
 import {Filter} from "../types/types";
 import {DecodedIdToken, getAuth} from "firebase-admin/auth";
 import getWereByTenant from "../were/were-by-tenant";
+import getWereTranslatorId from "../were/were-by-translator";
 
 /**
  * Retrieves project data based on specified filters and pagination options.
@@ -32,6 +33,8 @@ export default async function getProjectsData(
     tenant,
   } = request.data as any;
 
+  logger.error("Error trying to apply selected filters", request.data);
+
   const auth = getAuth();
   const validToken: DecodedIdToken = await auth.verifyIdToken(token);
 
@@ -49,7 +52,11 @@ export default async function getProjectsData(
     await getWhereByRequestId(requestdb, whereClause);
   } else {
     // Building where clause array
-    await getWereByStatus(status, whereClause);
+    if (validToken.role === "translator") {
+      await getWereTranslatorId(validToken.uid, whereClause);
+    } else {
+      await getWereByStatus(status, whereClause);
+    }
     await getWereByDate(monthSelected, yearSelected, whereClause);
   }
 
@@ -60,6 +67,7 @@ export default async function getProjectsData(
       await getWereByTenant(validToken, whereClause, tenant);
     }
   }
+
 
   try {
     const collectionRef = db.collection("projects");

@@ -1,5 +1,6 @@
-export const statuses = ["Received", "In Progress",
-  "Completed", "Archived", "On Hold", "Quoted"];
+const status_1 = ["Received", "Assigned", "In Progress"];
+const status_2 = ["Completed", "Archived", "On Hold", "Quoted"];
+export const statuses = [...status_1, ...status_2];
 export const allStatuses = ["Active", ...statuses];
 export const monthNames = [
   {name: "January", value: 0},
@@ -15,6 +16,11 @@ export const monthNames = [
   {name: "November", value: 10},
   {name: "December", value: 11},
 ];
-
-export const defaultStatuses = ["Received", "In Progress", "On Hold"];
+export const translatorStatuses = ["Assigned", "In Progress", "Completed"];
+export const defaultStatuses = [
+  "Received",
+  "Assigned",
+  "In Progress",
+  "On Hold",
+];
 export const billingStatuses = ["In Progress", "Completed", "Archived"];

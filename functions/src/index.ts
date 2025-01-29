@@ -6,6 +6,7 @@ import setRoles from "./endpoints/roles";
 import getTenantsData from "./endpoints/tenants";
 import {removeUserData, saveUserData} from "./endpoints/users";
 import {getAuth} from "firebase-admin/auth";
+import {getUsersByCriteria} from "./endpoints/translators";
 
 initializeApp();
 const db = getFirestore();
@@ -22,6 +23,11 @@ export const getProjects = onCall(async (request) => {
 export const getTenants = onCall(async (request) => {
   const tenants = await getTenantsData(db, request);
   return tenants;
+});
+
+export const getTranslatorUsers = onCall(async (request) => {
+  const users = await getUsersByCriteria(db, request);
+  return users;
 });
 
 export const saveUser = onCall(async (request) => {
