@@ -16,13 +16,14 @@ export async function saveTenant(tenant: Tenant, file?: File | null) {
             const storageRef = ref(storage, path);
             uploadTask = await uploadBytesResumable(storageRef, file);
         }
+        const expt = tenant.export ? true : false;
         const tenantRef = await addDoc(tenantDoc, {
             created: created,
             name: tenant.name,
             slug: tenant.slug || '',
             departments: tenant.departments || [],
             code: tenant.code,
-            export: tenant.export,
+            export: expt,
             ...(uploadTask ? { image: uploadTask?.metadata.fullPath } : {})
         });
 

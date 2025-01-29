@@ -20,6 +20,7 @@ export interface Project {
     billed?: number;
     tenant?: string;
     department?: string;
+    translatorId: string;
 }
 
 export interface ProjectObject {

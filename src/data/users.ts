@@ -16,19 +16,25 @@ export const getAllUsers = async () => {
     return result;
 };
 
-export const getUserById = async (user: LoggedUser): Promise<void> => {
+export const getUserById = async (claims: any, user: LoggedUser): Promise<LoggedUser | null> => {
     try {
         const userCollection = collection(db, 'users');
-        const querySnapshot = await getDocs(query(userCollection, where('uid', '==', user.uid)));
+        const querySnapshot = await getDocs(query(userCollection, where('uid', '==', claims.user_id)));
 
-        if (querySnapshot.empty) {
-            await addDoc(userCollection, {
-                ...removeUndefinedProps(user),
-                role: ROLES.Unauthorized
-            });
+        if (!querySnapshot.empty) {
+            return querySnapshot.docs[0].data() as LoggedUser;
         }
+
+        const newUser = {
+            ...removeUndefinedProps(user),
+            role: ROLES.Unauthorized
+        };
+
+        const docRef = await addDoc(userCollection, newUser);
+        return { ...newUser, id: docRef.id } as LoggedUser;
     } catch (error) {
         console.log('Error getting user by ID:', error);
+        return null;
     }
 };
 

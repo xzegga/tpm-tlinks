@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import {
     Badge, Box, Checkbox, Flex, FormControl, IconButton, Input, Link, LinkBox, Spinner, Td, Text, Tooltip, Tr,
-    useToast
+    useToast, Select
 } from '@chakra-ui/react';
 
 import Urgent from '../../assets/isUrgent.svg?react';
@@ -17,10 +17,12 @@ import { ROLES } from '../../models/users';
 import { shortenName, transfromTimestamp } from '../../utils/helpers';
 import Flag from '../Flag';
 import Status from '../Status';
+import { updateTranslatorId } from '../../data/Projects';
 
 interface ProjectRowProps {
     project: ProjectObject;
     removeProject: (project: ProjectObject) => void;
+    translators?: any[];
 }
 
 const stripped = {
@@ -28,12 +30,11 @@ const stripped = {
     backgroundSize: '58.74px 70.01px'
 };
 
-const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
+const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, translators }) => {
     const navigate = useNavigate();
     const { currentUser, selectedIds, setState } = useStore();
     const toast = useToast()
     const { status, loading: projectLoading } = useStore()
-
     const {
         loading,
         billed,
@@ -75,6 +76,29 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
             setState({ selectedIds: updatedIds });
         }
     }
+
+    const assignTranslator = async (translatorId: string, project: ProjectObject) => {
+        const projectId = project.id;
+
+        try {
+            await updateTranslatorId(projectId, translatorId);
+            console.log("Translator assigned successfully.");
+            toast({
+                description: `Translator assigned successfully.`,
+                status: 'info',
+                duration: 9000,
+                isClosable: true,
+            })
+        } catch (error) {
+            toast({
+                description: `Failed to assign translator.`,
+                status: 'error',
+                duration: 9000,
+                isClosable: true,
+            })
+        }
+    };
+
 
     return (
 
@@ -201,6 +225,28 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
             >
                 {project.data.status && <Status status={project.data.status} />}
             </LinkBox>
+            {currentUser?.role !== ROLES.Translator ? <>
+                <Td px={1.5} py={0.5}>
+                    <FormControl id="wordCount_number">
+                        <Select
+                            h={'30px'}
+                            maxW={'180px'}
+                            name="department"
+                            value={project.data.translatorId}
+                            onChange={(e) => assignTranslator(e.target.value, project)}
+                        >
+                            <option value=''>Select</option>
+                            {translators?.length && translators?.map((translator: any) => (
+                                <option
+                                    key={translator.uid}
+                                    value={translator.uid}
+                                >{translator.name}</option>
+
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Td>
+            </> : null}
             {currentUser?.role === ROLES.Admin ? <>
                 <Td px={1.5} py={0.5}>
                     <FormControl id="wordCount_number">
@@ -248,7 +294,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
                     </FormControl>
                 </Td>
             </> : <>
-                {status === 'Quoted' && !projectLoading ?
+                {currentUser?.role !== ROLES.Translator && status === 'Quoted' && !projectLoading ?
                     <>
                         <LinkBox
                             py={1.5} px={1.5}
@@ -293,16 +339,17 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject }) => {
                         <Spinner size='xs' color="orange.500" />
                         <Text ml={1} color={'orange.500'}>Saving</Text></Flex> :
                         <Box maxW={'30%'} w={'30%'}>
-                            <IconButton
-                                variant="ghost"
-                                height={10}
-                                icon={<RiDeleteBin6Line color={'#f84141'} />}
-                                aria-label="toggle-dark-mode"
-                                onClick={() => {
-                                    removeProject(project);
-                                }}
-                                disabled={project.data.status !== 'Received'}
-                            />
+                            {currentUser?.role !== ROLES.Translator &&
+                                <IconButton
+                                    variant="ghost"
+                                    height={10}
+                                    icon={<RiDeleteBin6Line color={'#f84141'} />}
+                                    aria-label="toggle-dark-mode"
+                                    onClick={() => {
+                                        removeProject(project);
+                                    }}
+                                    disabled={project.data.status !== 'Received'}
+                                />}
                         </Box>
                     }
                 </Flex>

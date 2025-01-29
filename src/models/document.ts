@@ -8,6 +8,7 @@ export interface Document {
     type: string;
     language?: string;
     isCertificate?: boolean;
+    isMemory: string;
 }
 
 export interface DocumentObject {

@@ -1,4 +1,4 @@
-import { Flex, Box, Text, Link, Divider, AlertDialog, useToast, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Button, Tooltip } from '@chakra-ui/react';
+import { Image, Flex, Box, Text, Link, Divider, AlertDialog, useToast, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Button, Tooltip } from '@chakra-ui/react';
 import React from 'react';
 import { defaultStyles, FileIcon } from 'react-file-icon';
 import Flag from '../Flag';
@@ -10,6 +10,7 @@ import { DeleteIcon } from '@chakra-ui/icons';
 import { deleteDocument } from '../../data/Documents';
 import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
+import TradosLogo from '../../assets/Trados.png';
 
 interface DocumentsTableProps {
     documents: DocumentObject[];
@@ -46,6 +47,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
     const cancelRef = React.useRef(null)
     const toast = useToast()
     const certificate = documents.find(doc => doc.data.isCertificate)
+    const memory = documents.find(doc => doc.data.isMemory)
 
     // get file extension 
     const getFileExtension = (fileName: string) => {
@@ -93,7 +95,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                         <Text ml={2}>Download</Text>
                                     </Flex>
                                 </Link>
-                                {currentUser?.role === ROLES.Admin &&
+                                {(currentUser?.role === ROLES.Admin || currentUser?.role === ROLES.Translator) &&
                                     <>
                                         <Divider ml={3} orientation={'vertical'} mr={3} />
                                         <DeleteIcon onClick={() => removeFile(docId, doc)} cursor={'pointer'} color={'red.400'} />
@@ -123,7 +125,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
 
 
 
-            if (doc.data.isCertificate) {
+            if (doc.data.isCertificate || doc.data.isMemory) {
                 const newDocuments = documents.filter((doc) => doc.id !== documentId);
                 setDocuments(newDocuments);
             } else {
@@ -172,7 +174,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                             </Flex>
                         </Link>
 
-                        {currentUser?.role === ROLES.Admin &&
+                        {(currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator ) &&
                             <>
                                 <Divider orientation={'vertical'} mx={3} h={'15px'} w={'1px'} />
                                 <DeleteIcon onClick={() => removeFile(certificate.id, certificate)} cursor={'pointer'} color={'red.400'} />
@@ -180,9 +182,42 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     </Flex>
                 </Flex>
             </Box>}
+
+
+            {memory && <Box>
+                <Flex justifyContent={'space-between'}
+                    alignItems={'center'} mb={2} mt={2} pb={3}
+                    style={{ borderBottom: '1px solid #cdcdcd' }} >
+                    <Flex pl={2}>
+                        <Flex alignItems={'center'}>
+                            <Box width={7} mr={3} color={'green'}>
+                                <Image src={TradosLogo} maxH="35px" margin={'0 auto'}/>
+                            </Box>
+                            <Text fontWeight={'bold'} fontSize={16} mr={2}>Memory: </Text>
+                            <Text>{memory.data.name}</Text>
+                        </Flex>
+                    </Flex>
+                    <Flex pr={5} alignItems={'center'}>
+
+                        <Link color='blue.400' onClick={() => downloadFile(memory.data.path, memory.data.name)}>
+                            <Flex justifyContent={'end'} alignItems={'center'}>
+                                <AiOutlineDownload />
+                                <Text ml={2}>Download</Text>
+                            </Flex>
+                        </Link>
+
+                        {(currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator ) &&
+                            <>
+                                <Divider orientation={'vertical'} mx={3} h={'15px'} w={'1px'} />
+                                <DeleteIcon onClick={() => removeFile(memory.id, memory)} cursor={'pointer'} color={'red.400'} />
+                            </>}
+                    </Flex>
+                </Flex>
+            </Box>}
+            <Box paddingTop={3}>
             {documents.map((doc) =>
                 <Box key={doc.id}>
-                    {!doc.data.isCertificate &&
+                    {!doc.data.isCertificate && !doc.data.isMemory &&
                         <Box key={doc.id} mb={10}>
                             <Flex justifyContent={'space-between'} alignItems={'center'} mb={2} mt={5}>
                                 <Box pl={2}>
@@ -194,7 +229,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                     </Flex>
                                 </Box>
                                 <Box>
-                                    {currentUser && currentUser.role === ROLES.Admin &&
+                                    {(currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator ) &&
                                         <Link color='blue.400' onClick={() => downloadFile(doc.data.path, doc.data.name)}>
                                             <Flex justifyContent={'end'} alignItems={'center'}>
                                                 <AiOutlineDownload />
@@ -214,7 +249,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                                         <Flex alignItems={'center'}>
                                                             <Flag name={target} mr={2} /> {target}
                                                         </Flex>
-                                                        {currentUser?.role === ROLES.Admin &&
+                                                        {(currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator ) &&
                                                             <InputFile doc={doc} uploadFile={uploadFile} target={target} />
                                                         }
                                                     </Flex>
@@ -230,11 +265,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                     </Box>
                                 </Box>
                             }
-
                         </Box>
                     }
                 </Box>
             )}
+            </Box>
             <AlertDialog
                 isOpen={isDeleting}
                 leastDestructiveRef={cancelRef}

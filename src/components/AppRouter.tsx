@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Users from '../pages/admin/Users';
 import AddProject from '../pages/shared/AddProject';
 import Dashboard from '../pages/client/Dashboard';
+import DashboardTranslator from '../pages/translator/Dashboard';
 import ProjectDetail from '../pages/shared/ProjectDetail';
 import Login from '../pages/Login';
 import Unauthorized from '../pages/Unauthorized';
@@ -30,6 +31,10 @@ const AppRouter: React.FC = () => {
                         <Route path="client" element={<Dashboard />} />
                         <Route path="client/project/:projectId" element={<ProjectDetail />} />
                         <Route path="client/projects/add" element={<AddProject />} />
+                    </Route>
+                    <Route path="/" element={<ProtectedRoute allowedRoles={ROLES.Translator} />} >
+                        <Route path="translator" element={<DashboardTranslator />} />
+                        <Route path="translator/project/:projectId" element={<ProjectDetail />} />
                     </Route>
                     <Route path="/" element={<ProtectedRoute allowedRoles={ROLES.Admin} />} >
                         <Route path="admin" element={<Dashboard />} />

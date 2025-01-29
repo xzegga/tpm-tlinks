@@ -48,11 +48,30 @@ export const saveProject = async (project: Project, files: Doc[], tenant: Tenant
         await setDoc(counterProj, { value: (counter?.value | 0) + 1 });
 
         // Save documents and document references
-        saveDocuments(files, projectCode, projectRef);
+        saveDocuments(files, project, projectRef, projectCode);
     } catch (error) {
         console.log(error);
     }
 };
+
+export const updateTranslatorId = async (projectId: string, translatorId: string): Promise<void> => {
+    try {
+        // Reference to the specific project document
+        const projectRef = doc(db, "projects", projectId);
+
+        // Update the translatorId field
+        await updateDoc(projectRef, {
+            translatorId: translatorId,
+            status: "Assigned"
+        });
+
+        console.log(`Translator ID updated successfully for project: ${projectId}`);
+    } catch (error) {
+        console.error("Error updating translator ID:", error);
+        throw new Error("Failed to update the translator ID. Please try again.");
+    }
+};
+
 
 export const getCorrelativeID = async (code: string, project?: Project) => {
     const created: Timestamp | undefined = project?.created;

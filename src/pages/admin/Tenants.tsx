@@ -109,14 +109,14 @@ const Tenants: React.FC = () => {
 
                 const newTenants = [ ...tenants ];
                 const index = newTenants.findIndex(item => item.id === tenant.id)
-                
+                const expt = tenant.export ? true : false;
                 if (index !== -1) {
                     newTenants[index] = {
                         ...newTenants[index],
                         name: tenant.name,
                         departments: tenant.departments,
                         code: tenant.code,
-                        export: tenant.export,
+                        export: expt,
                         ...(file && { image: `/ClientLogos/${file?.name}` })
                     }
                     setTenants(newTenants)

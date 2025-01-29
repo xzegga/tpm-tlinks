@@ -166,39 +166,41 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                             <Td borderWidth={0}
                                 colSpan={currentUser?.role !== ROLES.Admin ? 2 : 1}
                             ><Text py={2} fontWeight={'bold'}>Translator Comments:</Text>
-                                {currentUser?.role !== ROLES.Admin ?
+                                {currentUser?.role !== ROLES.Admin && project?.data?.comments ?
                                     <Box background={'yellow.100'} color={'yellow.900'} w={'100%'} p={3} borderRadius={3}>
                                         <Text >{project?.data?.comments}</Text>
                                     </Box> :
                                     null}
+
+                                {currentUser?.role === ROLES.Admin || currentUser?.role === ROLES.Translator ? (
+
+                                    <>
+                                        <FormControl id="comments_info">
+                                            <Textarea
+                                                name="comments"
+                                                id="comments"
+
+                                                value={comments}
+                                                onChange={(e) => {
+                                                    dbHandleCommentChange(e);
+                                                    setComments(e.target.value);
+                                                }}
+                                                borderColor="gray.300"
+                                                _hover={{
+                                                    borderRadius: 'gray.300'
+                                                }}
+                                                placeholder="Message"
+                                            />
+                                        </FormControl>
+                                        <Box maxW={'30%'} w={'30%'} mt={2}>
+                                            {loading?.comments && <Flex>
+                                                <Spinner size='xs' color="orange.500" />
+                                                <Text ml={1} color={'orange.500'}>Saving</Text></Flex>}
+                                        </Box>
+                                    </>
+                                ) : null}
                             </Td>
-                            {currentUser?.role === ROLES.Admin ? (
-                                <Td borderWidth={0}>
 
-                                    <FormControl id="comments_info">
-                                        <Textarea
-                                            name="comments"
-                                            id="comments"
-
-                                            value={comments}
-                                            onChange={(e) => {
-                                                dbHandleCommentChange(e);
-                                                setComments(e.target.value);
-                                            }}
-                                            borderColor="gray.300"
-                                            _hover={{
-                                                borderRadius: 'gray.300'
-                                            }}
-                                            placeholder="Message"
-                                        />
-                                    </FormControl>
-                                    <Box maxW={'30%'} w={'30%'} mt={2}>
-                                        {loading?.comments && <Flex>
-                                            <Spinner size='xs' color="orange.500" />
-                                            <Text ml={1} color={'orange.500'}>Saving</Text></Flex>}
-                                    </Box>
-                                </Td>
-                            ) : null}
                         </Tr>
                     </> : null}
 

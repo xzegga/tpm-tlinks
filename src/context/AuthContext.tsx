@@ -127,11 +127,13 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
           department: claims.department,
         } as LoggedUser
 
-        setState({
-          currentUser: { ...user, token: usr.accessToken }
-        });
+        const current = await getUserById(claims, user);
+        if(current){
+          setState({
+            currentUser: { ...current, token: usr.accessToken }
+          });
+        }
 
-        await getUserById(user);
       }
     }
   }

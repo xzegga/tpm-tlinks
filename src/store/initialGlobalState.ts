@@ -29,7 +29,7 @@ export const initialGlobalState = {
   currentUser: {} as LoggedUser,
   tenant: {} as Tenant,
   tenants: [] as Tenant[],
-  tenantQuery: '',
+  tenantQuery: 'all',
   selectedIds: [] as string[],
   refresh: false,
 };

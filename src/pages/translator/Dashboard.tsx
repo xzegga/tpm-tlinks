@@ -1,25 +1,17 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import React, { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { AiOutlineFileExcel } from 'react-icons/ai';
-import { useNavigate } from 'react-router-dom';
-
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import {
-    AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader,
-    AlertDialogOverlay, Box, Button, Center, Container, Flex, FormControl, FormLabel, Heading,
+    Box, Center, Container, Flex, FormControl, FormLabel, Heading,
     Input, Link, Select, Spacer, Tag, TagLabel, Text, useToast
 } from '@chakra-ui/react';
 
-import NavLnk from '../../components/NavLnk';
 import ProjectListTable from '../../components/tables/ProjectListTable';
-import TenantDropdown from '../../components/TenantDropdown';
-import { deleteProject } from '../../data/Projects';
 import { useStore } from '../../hooks/useGlobalStore';
 import useProjectExtras from '../../hooks/useProjectExtras';
 import { ProjectObject } from '../../models/project';
 import { ROLES } from '../../models/users';
-import { exportToExcel } from '../../utils/export';
 import { generateYears } from '../../utils/helpers';
-import { allStatuses, monthNames } from '../../utils/value-objects';
+import { monthNames, translatorStatuses } from '../../utils/value-objects';
 import { useAuth } from '../../context/AuthContext';
 import ChangeStatusSelector from '../../components/ChangeStatus';
 
@@ -29,9 +21,7 @@ const months = [
 ]
 
 const Dashboard: React.FC = () => {
-    const navigate = useNavigate();
     const toast = useToast();
-    const cancelRef = useRef(null);
     const { validate } = useAuth();
     const {
         tenant,
@@ -53,40 +43,9 @@ const Dashboard: React.FC = () => {
     const [request, setRequest] = useState<string>('');
     const [requestdb, setRequestdb] = useState<string>('');
     const [count, setCount] = useState<number>()
-    const [isOpen, setIsOpen] = useState(false);
-
-    const onClose = () => setIsOpen(false);
 
     const fetchMore = () => {
         getProjectQuery(false);
-    };
-
-    const removeProject = (project: ProjectObject) => {
-        setProject(project);
-        setIsOpen(true);
-    };
-
-    const handleDeleteProject = async () => {
-        if (currentUser && project) {
-            await validate();
-            deleteProject(project.id);
-
-            toast({
-                title: 'Project deleted',
-                description: 'The project has been deleted',
-                status: 'success',
-                duration: 9000,
-                isClosable: true
-            });
-
-            setIsOpen(false);
-            const projectsCopy = [...projects];
-            const index = projectsCopy.findIndex((p) => p.id === project.id);
-            if (index > -1) {
-                projectsCopy.splice(index, 1);
-                setProjects(projectsCopy);
-            }
-        }
     };
 
     const handleFilter = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -115,12 +74,6 @@ const Dashboard: React.FC = () => {
         setRequestdb(req);
     }
 
-    const removeInvalidProps = (obj) => {
-        return Object.fromEntries(
-            Object.entries(obj).filter(([_, value]) => value !== undefined && value !== null)
-        );
-    };
-
     const getProjectQuery = async (
         newQuery: boolean = false
     ) => {
@@ -131,8 +84,12 @@ const Dashboard: React.FC = () => {
                 const functions = getFunctions();
                 const getAllProjets = httpsCallable(functions, 'getProjects');
 
-
-                const cleanPayload = removeInvalidProps({
+                let tenant = null;
+                if (currentUser.role === ROLES.Admin) {
+                    tenant = tenantQuery && tenantQuery !== '' ? tenantQuery : currentUser.tenant;
+                }
+                console.log({status})
+                const projectData: any = await getAllProjets({
                     status,
                     monthSelected,
                     yearSelected,
@@ -141,10 +98,8 @@ const Dashboard: React.FC = () => {
                     newQuery,
                     pagination,
                     token: currentUser.token,
-                    tenant: currentUser.tenant,
+                    tenant,
                 });
-
-                const projectData: any = await getAllProjets(cleanPayload);
 
                 if (newQuery) {
                     setProjects(projectData?.data?.projects || []);
@@ -173,29 +128,6 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    function exportToExcelFn(): void {
-        const headers = [['Request No', 'Project', 'Source Language', 'Target Language', 'Word Count', 'Total']];
-        const dataArray = projects.map((item) => (
-            [
-                item.data.requestNumber,
-                item.data.projectId,
-                item.data.sourceLanguage,
-                item.data.targetLanguage,
-                item.data.wordCount || 0,
-                item.data.billed || 0
-            ]
-        ));
-        const data = [...headers, ...dataArray];
-
-        const fileName = `tpm-${months[monthSelected]}-${yearSelected}.xlsx`;
-        exportToExcel(data, fileName)
-    }
-
-    const handleRole = async (e: ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
-        setState({ tenantQuery: value })
-    }
-
     const debouncedHandleRequestChange = useMemo(() => debounce(setRequestDb, 300), []);
 
     const onChangeStatusSuccess = (st: string) => {
@@ -221,31 +153,8 @@ const Dashboard: React.FC = () => {
                             <Heading size="md" whiteSpace={'nowrap'} pl={3}>
                                 <Flex alignItems={'center'} gap={3}>
                                     <Text>Project List</Text>
-                                    {currentUser.role === 'admin' || tenant.export &&
-                                        <TenantDropdown
-                                            value={tenantQuery || currentUser.tenant}
-                                            select={'all'}
-                                            handleChange={handleRole} />
-                                    }
                                 </Flex>
                             </Heading>
-                            <Spacer />
-                            {currentUser.role === ROLES.Admin && (
-                                <Flex>
-
-                                    <Link onClick={() => navigate('users', { replace: true })} colorScheme={'blue.700'} mr={5}>
-                                        Manage Users
-                                    </Link>
-                                    <Link onClick={() => navigate('clients', { replace: true })} colorScheme={'blue.700'} mr={5}>
-                                        Manage Clients
-                                    </Link>
-                                </Flex>
-                            )}
-                            <Box>
-                                <NavLnk to="projects/add" name="New Project" colorScheme="blue.500" bg="blue.700" size="md" color="white">
-                                    New Project
-                                </NavLnk>
-                            </Box>
                         </Flex>
 
                         <Box pt={10}>
@@ -299,7 +208,7 @@ const Dashboard: React.FC = () => {
                                         <Flex alignItems={'center'} justifyContent={'start'}>
                                             <FormLabel my={0}>Status</FormLabel>
                                             <Select minW={140} ml={1} name={'status'} id={'status'} value={status} onChange={handleFilter}>
-                                                {allStatuses.map((s: string, index) => (
+                                                {translatorStatuses.map((s: string, index) => (
                                                     <option key={index} value={s}>
                                                         {s}
                                                     </option>
@@ -360,34 +269,26 @@ const Dashboard: React.FC = () => {
 
                                     </Box>
                                 ))}
-                                {currentUser.role === ROLES.Admin ?
-                                    <Flex flex={1} alignContent={'flex-end'}>
-                                        <Button
-                                            size={'xs'}
-                                            ml={'auto'}
-                                            color={'green.500'}
-                                            leftIcon={<AiOutlineFileExcel />}
-                                            onClick={exportToExcelFn}
-                                        >Export to Excel</Button>
-                                    </Flex>
-                                    : null}
 
                             </Flex>
                         </Box>
-                        {currentUser.role === ROLES.Admin && selectedIds?.length ?
+                        {currentUser.role === ROLES.Translator && selectedIds?.length ?
                             <Box borderTop={1} borderTopColor={'black'} bgColor={'yellow.50'}
                                 color={'black'} overflow={'hidden'} mt={4}>
                                 <Flex alignItems={'center'} gap={3} py={2} px={4}
                                 >
                                     <Text>Change Status</Text>
-                                    <ChangeStatusSelector ids={selectedIds} onSuccess={onChangeStatusSuccess} role={currentUser.role}/>
+                                    <ChangeStatusSelector
+                                        ids={selectedIds}
+                                        onSuccess={onChangeStatusSuccess}
+                                        role={currentUser.role} />
                                 </Flex>
                             </Box>
                             : null}
                         <Box>
                             <ProjectListTable
                                 projects={projects}
-                                removeProject={removeProject} />
+                                removeProject={()=>{}} />
                             <Spacer mt={10} />
                             <Center>
                                 Showing {projects.length} of {count ? count : 0} projects
@@ -402,26 +303,6 @@ const Dashboard: React.FC = () => {
                         </Box>
                     </Container>
 
-                    <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
-                        <AlertDialogOverlay>
-                            <AlertDialogContent>
-                                <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                                    Delete Project {project?.data.projectId}
-                                </AlertDialogHeader>
-
-                                <AlertDialogBody>Are you sure to delete this project? All related files will be deleted and you can't undo this action afterward.</AlertDialogBody>
-
-                                <AlertDialogFooter>
-                                    <Button ref={cancelRef} onClick={onClose}>
-                                        Cancel
-                                    </Button>
-                                    <Button colorScheme="red" onClick={handleDeleteProject} ml={3}>
-                                        Delete
-                                    </Button>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialogOverlay>
-                    </AlertDialog>
                 </>
             )}
         </>

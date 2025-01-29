@@ -49,6 +49,7 @@ const Users: React.FC = () => {
     }
 
     const handleRole = async (e: ChangeEvent<HTMLSelectElement>, user: any) => {
+        console.log({ user })
         setState({ loading: true })
         const name = e.target.name;
         const value = e.target.value;
@@ -60,7 +61,7 @@ const Users: React.FC = () => {
                 const usr = updatedUsers.find(usr => usr.id === user.id)
                 usr.data = {
                     ...usr.data,
-                    ...(value && { [`${name}`]: value }),
+                    [`${name}`]: value,
                     ...(name === 'tenant' && { department: 'all' })
                 }
 
@@ -315,6 +316,7 @@ const Users: React.FC = () => {
                                         >
                                             <option value={ROLES.Admin}>Admin</option>
                                             <option value={ROLES.Client}>Client</option>
+                                            <option value={ROLES.Translator}>Translator</option>
                                             <option value={ROLES.Unauthorized}>Unauthorized</option>
                                         </Select>
                                     </Td>
@@ -345,9 +347,9 @@ const Users: React.FC = () => {
                                         >
                                             <option value='all'>All</option>
                                             {tenants && tenants.length ? <>
-                                                {tenants.find(tn => tn.slug === user.data?.tenant)?.departments.map((dp) =>
+                                                {tenants.find(tn => tn.slug === user.data?.tenant)?.departments.map((dp, index) =>
                                                     <option
-                                                        key={dp}
+                                                        key={index}
                                                         value={dp}
                                                     >{dp}
                                                     </option>)

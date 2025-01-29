@@ -10,23 +10,27 @@ import {
 
 import { getProjectById, updateStatus } from '../data/Projects';
 import { ProjectObject } from '../models/project';
+import { ROLES } from '../models/users';
 import { db } from '../utils/init-firebase';
-import { statuses } from '../utils/value-objects';
+import { adminStatuses, translatorStatuses } from '../utils/value-objects';
 import { useAuth } from '../context/AuthContext';
 import { FaArchive } from 'react-icons/fa';
 
-export default function ChangeStatusSelector({ project, onSuccess, ids, setProject, button = false }: {
+
+export default function ChangeStatusSelector({ project, onSuccess, ids, setProject, button = false, role }: {
     project?: ProjectObject,
     ids?: string[],
     setProject?: Dispatch<React.SetStateAction<ProjectObject | undefined>>,
     onSuccess?: (status: string) => void,
+    role: string;
     button?: boolean;
 }) {
     const [isOpen, setIsOpen] = useState(false)
     const { validate } = useAuth();
     const onClose = () => setIsOpen(false)
     const cancelRef = useRef(null)
-    const [status, setStatus] = useState<string>(ids?.length ? statuses[0] : project?.data?.status || '')
+    const statusAvailable = role === ROLES.Admin ? adminStatuses : translatorStatuses;
+    const [status, setStatus] = useState<string>(ids?.length ? statusAvailable[0] : project?.data?.status || '')
     const toast = useToast()
 
     const handleChangeStatus = (status: string) => {
@@ -82,9 +86,11 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
                 maxW={'150px'}
             >
                 {ids && <option value="none">Select Status</option>}
-                {statuses.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                ))}
+                {
+                    statusAvailable.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                    ))
+                }
             </Select> :
             <Button ml={3} leftIcon={<FaArchive />} colorScheme='orange' onClick={() => handleChangeStatus('Archived')}>Archive</Button>
         }

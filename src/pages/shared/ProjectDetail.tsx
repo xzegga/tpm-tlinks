@@ -9,10 +9,10 @@ import { ref, getDownloadURL, getBlob } from 'firebase/storage';
 import fileDownload from 'js-file-download'
 import ProjectTable from '../../components/tables/ProjectDetailTable';
 import DocumentTable from '../../components/tables/DocumentTable';
-import { GrDocumentZip } from 'react-icons/gr';
+import { GrArchive, GrDocumentZip } from 'react-icons/gr';
 import { ProjectObject } from '../../models/project';
 import { Document, DocumentObject, ProcessedDocument } from '../../models/document';
-import { getDocuments, saveCertificate, saveTargetDocuments } from '../../data/Documents';
+import { getDocuments, saveCertificate, saveMemory, saveTargetDocuments } from '../../data/Documents';
 import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import './AddProject.css';
 import InputFileBtn from '../../components/InputFileBtn';
@@ -38,6 +38,7 @@ const ProjectDetail: React.FC = () => {
     const [documents, setDocuments] = React.useState<DocumentObject[]>([]);
     const [processedDocuments, setProcessedDocuments] = React.useState<ProcessedDocument[]>([])
     const [certificate, setCertificate] = React.useState<DocumentObject>();
+    const [memory, setMemory] = React.useState<DocumentObject>();
 
     useEffect(() => {
         if (currentUser && projectId) {
@@ -51,6 +52,7 @@ const ProjectDetail: React.FC = () => {
     useEffect(() => {
         if (documents?.length && projectId) {
             setCertificate(documents.find(doc => doc.data.isCertificate));
+            setMemory(documents.find(doc => doc.data.isMemory));
             updateProcessedDocuments();
         }
     }, [documents]);
@@ -131,10 +133,10 @@ const ProjectDetail: React.FC = () => {
         files: FileList,
         document: DocumentObject | null = null,
         target: string | null = null) => {
-        // Get month name of current date             
-        if (project && currentUser?.role === ROLES.Admin && document && target) {
-            setSaving(true, () => console.log("Saving"))
 
+        // Get month name of current date
+        if (project && (currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator) && document && target) {
+            setSaving(true, () => console.log("Saving"))
             const newDocument = await saveTargetDocuments(files, document, project, target)
             if (newDocument.length) {
                 const newdocuments = processedDocuments.slice();
@@ -161,7 +163,7 @@ const ProjectDetail: React.FC = () => {
             if (projectId && project) {
                 setSaving(true, () => console.log("saving"))
                 const projectRef = doc(collection(db, 'projects'), projectId);
-                const newCert = await saveCertificate(files[0], project.data.projectId, projectRef)
+                const newCert = await saveCertificate(files[0], project, projectRef)
                 setSaving(false, () => console.log("saving"));
                 toast({
                     description: `Certificate uploaded successfully`,
@@ -178,6 +180,32 @@ const ProjectDetail: React.FC = () => {
                     setDocuments(newDocuments)
                 })
             }
+        }
+    }
+
+    const uploadMemory = async (
+        files: FileList) => {
+
+        setSaving(true, () => console.log("saving"))
+        if (projectId && project) {
+            setSaving(true, () => console.log("saving"))
+            const projectRef = doc(collection(db, 'projects'), projectId);
+            const newCert = await saveMemory(files[0], project, projectRef)
+            setSaving(false, () => console.log("saving"));
+            toast({
+                description: `Memory uploaded successfully`,
+                status: 'success',
+                duration: 9000,
+                isClosable: true,
+            })
+            const [newFile] = newCert
+            getDoc(newFile).then(dc => {
+                const newDocuments = [{
+                    id: dc.id,
+                    data: dc.data() as Document
+                }, ...documents]
+                setDocuments(newDocuments)
+            })
         }
     }
 
@@ -209,8 +237,8 @@ const ProjectDetail: React.FC = () => {
                                         </Flex> : null}
                                 </Flex>
 
-                                {currentUser.role === ROLES.Admin && (
-                                    <ChangeStatusSelector setProject={setProject} project={project} />
+                                {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && (
+                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role}/>
                                 )}
                                 {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>
@@ -221,10 +249,25 @@ const ProjectDetail: React.FC = () => {
                         <Spacer h={'40px'} />
                         <Flex justifyContent={'space-between'} alignItems={'center'}>
                             <Heading size='md' pl={4} color='blue.400'>Documents</Heading>
-                            <Flex justifyContent={'flex-end'} mb={2} mr={3}>
-                                {(project?.data.isCertificate && !certificate) && <InputFileBtn uploadFile={uploadFile} />}
+                            <Flex justifyContent={'flex-end'} mb={2} mr={3} gap={2}>
+                                {currentUser?.role === ROLES.Admin || currentUser?.role === ROLES.Translator ? <>
+                                    {(!memory) &&
+                                        <InputFileBtn
+                                            uploadFile={uploadMemory}
+                                            text={"Upload Memory"}
+                                            scheme='yellow'
+                                            icon={GrArchive} />}
 
-                                {currentUser?.role === ROLES.Client && processedDocuments?.length >= 1 && <Button ml={3}
+                                    {(project?.data.isCertificate && !certificate) &&
+                                        <InputFileBtn
+                                            uploadFile={uploadFile}
+                                            text={"Add Certificate"}
+                                            scheme='green'
+                                            icon={GrDocumentZip} />}
+                                </> : null
+                                }
+
+                                {currentUser?.role === ROLES.Client && processedDocuments?.length >= 1 && <Button
                                     leftIcon={<GrDocumentZip className={'white-icon'} />}
                                     colorScheme='blue'
                                     onClick={() => downloadZippedFiles()}>
@@ -233,7 +276,7 @@ const ProjectDetail: React.FC = () => {
                                     </Flex>
                                 </Button>}
 
-                                {currentUser.role === ROLES.Admin && documents?.length >= 1 && <Button ml={3}
+                                {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && documents?.length >= 1 && <Button
                                     leftIcon={<GrDocumentZip className={'white-icon'} />}
                                     colorScheme='blue'
                                     onClick={() => downloadSourceZippedFiles()}>
@@ -244,11 +287,11 @@ const ProjectDetail: React.FC = () => {
 
 
                                 {project?.data?.status === 'Completed' &&
-                                    <ChangeStatusSelector setProject={setProject} project={project} button={true}  />                                    
+                                    <ChangeStatusSelector setProject={setProject} project={project} button={true} />
                                 }
                             </Flex>
                         </Flex>
-                        <Box className={saving ? 'blured' : ''} position={'relative'}>
+                        <Box className={saving ? 'blured' : ''} position={'relative'} >
                             <DocumentTable
                                 documents={documents}
                                 setDocuments={setDocuments}
@@ -282,7 +325,7 @@ const ProjectDetail: React.FC = () => {
                 </Container >
             )}
 
-            
+
         </>
     );
 };
