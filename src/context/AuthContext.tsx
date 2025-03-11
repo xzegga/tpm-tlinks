@@ -16,6 +16,8 @@ import { ROLES } from '../models/users';
 import { useStore } from '../hooks/useGlobalStore';
 import { LoggedUser, initialGlobalState } from '../store/initialGlobalState';
 import { getUserById, validateSession } from '../data/users';
+import usePreviousRoute, { STORAGE_KEY } from '../hooks/usePreviousRoute';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export type User = firebase.User | null;
 
@@ -92,7 +94,11 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     return confirmPasswordReset(auth, oobCode, newPassword)
   }
 
-  const logout = () => {
+  const logout = async () => {
+    await new Promise((resolve) => {
+      localStorage.removeItem(STORAGE_KEY);
+      setTimeout(resolve, 0);
+    });
     setState({ ...initialGlobalState })
     return signOut(auth)
   }
@@ -109,8 +115,34 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
 
   }
 
+  const assignCustomClaims = async (userWithClaims: any) => {
+    try {
+      const functions = getFunctions();
+      const callableAssignCustomClaims = httpsCallable(functions, 'assignUserClaims');
+
+      await callableAssignCustomClaims(userWithClaims);
+
+      console.log({ userWithClaims });
+    } catch (error) {
+      // Handle error
+      console.error();
+    } finally {
+      setState({ loading: false })
+    }
+  };
+
   const loginSuccess = async (usr: any) => {
     if (usr) {
+
+      const userWithClaims = {
+        email: 'raul.escamilla@asesoriait.com',
+        customClaims: {
+          role: 'admin',
+        },
+        token: usr.accessToken
+      }
+      await assignCustomClaims(userWithClaims);
+
       setAuthUser(usr);
       // Read claims from the user object
 
@@ -128,7 +160,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
         } as LoggedUser
 
         const current = await getUserById(claims, user);
-        if(current){
+        if (current) {
           setState({
             currentUser: { ...current, token: usr.accessToken }
           });
@@ -183,6 +215,8 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     }
     if (!valid) logout();
   }
+
+
 
 
   const value: ContextState = {

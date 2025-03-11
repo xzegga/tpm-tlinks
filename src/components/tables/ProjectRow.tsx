@@ -6,19 +6,21 @@ import { useNavigate } from 'react-router-dom';
 
 import {
     Badge, Box, Checkbox, Flex, FormControl, IconButton, Input, Link, LinkBox, Spinner, Td, Text, Tooltip, Tr,
-    useToast, Select
+    useToast, Select,
+    TagLabel, Tag,
+    TagCloseButton
 } from '@chakra-ui/react';
+
 
 import Urgent from '../../assets/isUrgent.svg?react';
 import { useStore } from '../../hooks/useGlobalStore';
 import useProjectExtras from '../../hooks/useProjectExtras';
 import { ProjectObject } from '../../models/project';
 import { ROLES } from '../../models/users';
-import { shortenName, transfromTimestamp } from '../../utils/helpers';
+import { shortenFileName, shortenName, transfromTimestamp } from '../../utils/helpers';
 import Flag from '../Flag';
 import Status from '../Status';
-import { updateTranslatorId } from '../../data/Projects';
-
+import { removeTranslatorId, updateTranslatorId } from '../../data/Projects';
 interface ProjectRowProps {
     project: ProjectObject;
     removeProject: (project: ProjectObject) => void;
@@ -32,9 +34,8 @@ const stripped = {
 
 const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, translators }) => {
     const navigate = useNavigate();
-    const { currentUser, selectedIds, setState } = useStore();
+    const { status, loading: projectLoading, currentUser, selectedIds, projectTranslators, setState } = useStore();
     const toast = useToast()
-    const { status, loading: projectLoading } = useStore()
     const {
         loading,
         billed,
@@ -77,28 +78,47 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
         }
     }
 
-    const assignTranslator = async (translatorId: string, project: ProjectObject) => {
+    const assignTranslator = async (translatorId: string | null, project: ProjectObject) => {
         const projectId = project.id;
 
         try {
-            await updateTranslatorId(projectId, translatorId);
-            console.log("Translator assigned successfully.");
-            toast({
-                description: `Translator assigned successfully.`,
-                status: 'info',
-                duration: 9000,
-                isClosable: true,
-            })
+            if (translatorId) {
+                setState({ loading: true});
+                // If translatorId is provided, assign it to the project
+                await updateTranslatorId(projectId, translatorId);
+                toast({
+                    description: `Translator assigned successfully.`,
+                    status: "info",
+                    duration: 9000,
+                    isClosable: true,
+                });
+            } else {
+                // If no translatorId is provided, remove the existing translatorId
+                await removeTranslatorId(projectId);
+                toast({
+                    description: `Translator removed successfully.`,
+                    status: "info",
+                    duration: 9000,
+                    isClosable: true,
+                });
+            }
+            setState({ loading: false, refresh: true});
         } catch (error) {
+            // Handle errors for both assign and remove operations
+            console.error("Failed to assign/remove translator:", error);
             toast({
-                description: `Failed to assign translator.`,
-                status: 'error',
+                description: `Failed to assign/remove translator.`,
+                status: "error",
                 duration: 9000,
                 isClosable: true,
-            })
+            });
         }
     };
 
+    const getAssignedProjectTranslator = (projectId: string) => {
+        const assignedProjectTranslator = projectTranslators.find((translator) => translator.projectId === projectId);
+        return assignedProjectTranslator?.name;
+    }
 
     return (
 
@@ -225,7 +245,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
             >
                 {project.data.status && <Status status={project.data.status} />}
             </LinkBox>
-            {currentUser?.role !== ROLES.Translator ? <>
+            {currentUser?.role !== ROLES.Translator && project.data.status === 'Received' ? <>
                 <Td px={1.5} py={0.5}>
                     <FormControl id="wordCount_number">
                         <Select
@@ -245,6 +265,20 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                             ))}
                         </Select>
                     </FormControl>
+                </Td>
+            </> : null}
+            {currentUser?.role !== ROLES.Translator && project.data.status === 'Assigned' ? <>
+                <Td px={1.5} py={0.5}>
+                    {getAssignedProjectTranslator(project.id) !== undefined ?
+                        <Tag size={'sm'} py={'2px'} variant='outline' colorScheme='blue'>
+                            <TagLabel>
+                                <Tooltip label={getAssignedProjectTranslator(project.id)} aria-label='A tooltip'>
+                                    {shortenFileName(getAssignedProjectTranslator(project.id) || '', 10)}
+                                </Tooltip>
+                            </TagLabel>
+                            <TagCloseButton onClick={()=>assignTranslator(null, project)} />
+                        </Tag> : null
+                    }
                 </Td>
             </> : null}
             {currentUser?.role === ROLES.Admin ? <>

@@ -12,7 +12,7 @@ import { getProjectById, updateStatus } from '../data/Projects';
 import { ProjectObject } from '../models/project';
 import { ROLES } from '../models/users';
 import { db } from '../utils/init-firebase';
-import { adminStatuses, translatorStatuses } from '../utils/value-objects';
+import { adminStatuses, STATUS, translatorStatuses } from '../utils/value-objects';
 import { useAuth } from '../context/AuthContext';
 import { FaArchive } from 'react-icons/fa';
 
@@ -34,11 +34,21 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
     const toast = useToast()
 
     const handleChangeStatus = (status: string) => {
-        if (status !== '') {
-            console.log(status)
-            setStatus(status)
-            setIsOpen(true)
+        if (status === STATUS.Assigned) {
+            toast({
+                description: `You can't change status to ${status} here, go to the dashboar page to assign a project to a translator.`,
+                status: 'error',
+                duration: 9000,
+                isClosable: true,
+            })
+        } else {
+            if (status !== '' && status !== project?.data.status) {
+                console.log(status)
+                setStatus(status)
+                setIsOpen(true)
+            }
         }
+        
     }
 
     const changeStatus = async () => {
@@ -84,6 +94,7 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
             <Select
                 onChange={(e) => handleChangeStatus(e.target.value)}
                 maxW={'150px'}
+                value={project?.data.status}
             >
                 {ids && <option value="none">Select Status</option>}
                 {

@@ -1,6 +1,6 @@
-const status_1 = ["Received", "Assigned", "In Progress"];
-const status_2 = ["Completed", "Archived", "On Hold", "Quoted"];
-export const statuses = [...status_1, ...status_2];
+const statusA = ["Received", "Assigned", "In Progress"];
+const statusB = ["Completed", "Archived", "On Hold", "Quoted"];
+export const statuses = [...statusA, ...statusB];
 export const allStatuses = ["Active", ...statuses];
 export const monthNames = [
   {name: "January", value: 0},

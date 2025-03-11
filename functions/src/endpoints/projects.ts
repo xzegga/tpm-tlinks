@@ -7,6 +7,7 @@ import {Filter} from "../types/types";
 import {DecodedIdToken, getAuth} from "firebase-admin/auth";
 import getWereByTenant from "../were/were-by-tenant";
 import getWereTranslatorId from "../were/were-by-translator";
+import {getUsersNamesByUids} from "./userName";
 
 /**
  * Retrieves project data based on specified filters and pagination options.
@@ -21,8 +22,7 @@ export default async function getProjectsData(
   db: FirebaseFirestore.Firestore,
   request: CallableRequest<any>
 ) {
-  const {
-    status,
+  const {status,
     monthSelected,
     yearSelected,
     requestdb,
@@ -68,7 +68,6 @@ export default async function getProjectsData(
     }
   }
 
-
   try {
     const collectionRef = db.collection("projects");
     let query = collectionRef.orderBy("created", "desc");
@@ -76,7 +75,10 @@ export default async function getProjectsData(
     // Apply where clauses if any
     if (whereClause.length > 0) {
       whereClause.forEach((clause) => {
-        query = query.where(clause.field, clause.operator, clause.value);
+        query = query.where(
+          clause.field,
+          clause.operator,
+          clause.value);
       });
     }
 
@@ -101,15 +103,40 @@ export default async function getProjectsData(
       return {projects: [], lastDoc: null, count: 0};
     }
 
-    const nextLastDoc =
-      querySnapshot.docs[querySnapshot.docs.length - 1].id;
+    const nextLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1].id;
 
     const projectsData = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       data: doc.data(),
     }));
 
-    return {projects: projectsData, lastDoc: nextLastDoc, count};
+    const translatorRequests = projectsData
+      .filter((proj) => proj.data.translatorId) // Solo si hay un `translatorId`
+      .map((proj) => ({
+        projectId: proj.id,
+        uid: proj.data.translatorId,
+      }));
+
+    let translatorNames = [];
+
+    if (translatorRequests.length > 0) {
+      const callableRequest = {
+        data: {users: translatorRequests, token},
+        rawRequest: {},
+      } as CallableRequest<any>;
+
+      const response = await getUsersNamesByUids(db, callableRequest);
+
+      if (response && response.users) {
+        translatorNames = response.users;
+      }
+    }
+
+    return {
+      projects: projectsData,
+      lastDoc: nextLastDoc,
+      count,
+      translators: translatorNames};
   } catch (error) {
     logger.error("Error trying to apply selected filters", error);
     throw new HttpsError("internal", "Error getting projects");

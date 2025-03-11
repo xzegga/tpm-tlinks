@@ -5,12 +5,14 @@ import Card from '../components/Card';
 import Navlnk from '../components/NavLnk';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../assets/logo.png';
+import { useStore } from '../hooks/useGlobalStore';
 
 const Unauthorized: React.FC = () => {
     const { logout } = useAuth()
     const navigate = useNavigate()
     const location = useLocation();
-
+    const { currentUser } = useStore()
+    console.log(currentUser)
     const logoutFn = async (e: React.ChangeEvent<unknown>) => {
         e.preventDefault()
         await logout()

@@ -18,6 +18,12 @@ export type LoggedUser = {
   token: string,
 } & User;
 
+export type Translators = {
+  uid: string,
+  name: string,
+  projectId: string,
+}
+
 export const initialGlobalState = {
   title: 'Lets start',
   monthSelected: new Date().getMonth(),
@@ -31,5 +37,6 @@ export const initialGlobalState = {
   tenants: [] as Tenant[],
   tenantQuery: 'all',
   selectedIds: [] as string[],
+  projectTranslators: [] as Translators[],
   refresh: false,
 };

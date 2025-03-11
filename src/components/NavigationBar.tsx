@@ -85,7 +85,7 @@ const NavigationBar: React.FC = () => {
                             {currentUser && currentUser?.photoURL && <Image borderRadius='full' boxSize='35px' src={currentUser?.photoURL} mt="0" />}
                             <Text mt={0} fontSize="sm" fontWeight="semibold" lineHeight="short" pl="2">
                                 {currentUser?.displayName && (<span>{currentUser?.displayName} <br /></span>)}
-                                <Navlnk to='/logout' name='Logout' p="0" m="0" maxH="18px"
+                                <Navlnk to='/logout' data-logout name='Logout' p="0" m="0" maxH="18px"
                                     onClick={logoutFn}
                                 />
                             </Text>

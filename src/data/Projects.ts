@@ -7,6 +7,7 @@ import { twoDigitDate } from '../utils/helpers';
 import { db, storage } from '../utils/init-firebase';
 import { saveDocuments } from './Documents';
 import { Tenant } from '../models/clients';
+import { STATUS } from '../utils/value-objects';
 
 export const getProjectById = async (projectId: string) => {
     const docRef = doc(collection(db, 'projects'), projectId);
@@ -69,6 +70,24 @@ export const updateTranslatorId = async (projectId: string, translatorId: string
     } catch (error) {
         console.error("Error updating translator ID:", error);
         throw new Error("Failed to update the translator ID. Please try again.");
+    }
+};
+
+export const removeTranslatorId = async (projectId: string): Promise<void> => {
+    try {
+        // Reference to the specific project document
+        const projectRef = doc(db, "projects", projectId);
+
+        // Update the document, removing the translatorId field
+        await updateDoc(projectRef, {
+        translatorId: null, // Sets translatorId to null to indicate removal
+        status: STATUS.Received, // Optionally update the status field
+        });
+
+        console.log(`Translator ID removed successfully for project: ${projectId}`);
+    } catch (error) {
+        console.error("Error removing translator ID:", error);
+        throw new Error("Failed to remove the translator ID. Please try again.");
     }
 };
 

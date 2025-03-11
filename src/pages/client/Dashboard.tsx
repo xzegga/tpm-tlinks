@@ -154,7 +154,7 @@ const Dashboard: React.FC = () => {
                         ...projectData?.data?.projects || []
                     ]);
                 }
-
+                setState({projectTranslators: projectData?.data?.translators || []});
                 setLastDoc(projectData?.data.lastDoc || null);
                 setCount(projectData?.data?.count);
                 setState({ loading: false, loadingMore: false });

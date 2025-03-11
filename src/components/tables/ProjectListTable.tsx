@@ -55,14 +55,14 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
 
                     setTranslators(usersData?.data || []);
                 }
-                setState({ loading: false, loadingMore: false });
+                setState({ loading: false, loadingMore: false});
             }
 
         } catch (error) {
             // Handle error
             toast({
                 title: 'Error getting translators',
-                description: 'There is an error getting the translator list',
+                description: 'There is an error getting the translator list ' + error,
                 status: 'error',
                 duration: 9000,
                 isClosable: true
@@ -101,7 +101,6 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
                                 {currentUser.role !== ROLES.Translator && <Th px={1} textAlign={'center'}>Translator</Th>}
-                                
                                 {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>

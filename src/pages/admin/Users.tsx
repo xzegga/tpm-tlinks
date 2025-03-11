@@ -49,7 +49,6 @@ const Users: React.FC = () => {
     }
 
     const handleRole = async (e: ChangeEvent<HTMLSelectElement>, user: any) => {
-        console.log({ user })
         setState({ loading: true })
         const name = e.target.name;
         const value = e.target.value;
@@ -122,7 +121,7 @@ const Users: React.FC = () => {
             const response = await removeUser(currentUser.token, user.data.uid, user.id)
             await getUsers();
             setState({ loading: false })
-            console.log({response})
+            console.log({ response })
             toast({
                 description: response.data,
                 status: 'success',

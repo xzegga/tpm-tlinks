@@ -15,7 +15,17 @@ export const monthNames = [
     { name: 'December', value: 11 }
 ];
 
-export const defaultStatuses = ['Received', 'In Progress', 'On Hold'];
-export const billingStatuses = ['In Progress','Completed', 'Archived'];
-export const translatorStatuses = ['Assigned', 'In Progress', 'Completed'];
-export const adminStatuses = ['Received', 'In Progress', 'Completed', 'Archived', 'On Hold', 'Quoted'];
+export const STATUS = {
+    Received: 'Received',
+    Assigned: 'Assigned',
+    InProgress: 'In Progress',
+    Completed: 'Completed',
+    Archived: 'Archived',
+    OnHold: 'On Hold',
+    Quoted: 'Quoted'
+} as const;
+
+export const defaultStatuses = [STATUS.Received, STATUS.InProgress, STATUS.OnHold];
+export const billingStatuses = [STATUS.InProgress, STATUS.Completed, STATUS.Archived];
+export const translatorStatuses = [STATUS.Assigned, STATUS.InProgress, STATUS.Completed];
+export const adminStatuses = [STATUS.Received, STATUS.Assigned, STATUS.InProgress, STATUS.Completed, STATUS.Archived, STATUS.OnHold, STATUS.Quoted];
