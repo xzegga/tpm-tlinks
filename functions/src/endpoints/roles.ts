@@ -12,17 +12,16 @@ import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
  */
 export default async function setRoles(request: CallableRequest<any>) {
     const { email, customClaims, token } = request.data;
-    logger.info(`Data received:`, { email, customClaims, token });
     if (!email || !customClaims || !token) {
         return new HttpsError('invalid-argument', 'Missing required fields');
     }
 
     const auth = getAuth();
-    //const validToken: DecodedIdToken = await auth.verifyIdToken(token);
+    const validToken: DecodedIdToken = await auth.verifyIdToken(token);
 
-    // if (!validToken || validToken.role !== "admin") {
-    //   return new HttpsError("internal", "Permissions denied");
-    // }
+    if (!validToken || validToken.role !== 'admin') {
+        return new HttpsError('internal', 'Permissions denied');
+    }
 
     try {
         const user = await auth.getUserByEmail(email);

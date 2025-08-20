@@ -13,7 +13,6 @@ initializeApp();
 const db = getFirestore();
 
 export const assignUserClaims = onCall(async (request) => {
-    logger.info(`NO ERRORS DETECTED`);
     await setRoles(request);
 });
 
