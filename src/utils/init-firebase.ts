@@ -3,7 +3,6 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
-import { initializeAppCheck } from 'firebase/app-check';
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_API_KEY,
@@ -23,10 +22,6 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 if (location.hostname === 'localhost') {
-    initializeAppCheck(app, {
-        provider: new DebugAppCheckProvider(),
-        isTokenAutoRefreshEnabled: true // opcional: para refrescar el token automáticamente
-    });
     connectFirestoreEmulator(db, '127.0.0.1', 5004);
     connectAuthEmulator(auth, 'http://127.0.0.1:9099');
     connectFunctionsEmulator(functions, '127.0.0.1', 5003);

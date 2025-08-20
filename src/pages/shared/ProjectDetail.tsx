@@ -25,8 +25,6 @@ import { useStore } from '../../hooks/useGlobalStore';
 import ChangeStatusSelector from '../../components/ChangeStatus';
 
 
-const jszip = new JSZip();
-
 const ProjectDetail: React.FC = () => {
     const { projectId } = useParams();
     const { currentUser } = useStore();
@@ -88,6 +86,8 @@ const ProjectDetail: React.FC = () => {
     }
 
     const downloadZippedFiles = async () => {
+        const jszip = new JSZip();
+
         for (const docObj of processedDocuments) {
             for (const file of docObj.documents)
                 if (file.data.path) {
@@ -110,6 +110,7 @@ const ProjectDetail: React.FC = () => {
 
     const downloadSourceZippedFiles = async () => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const jszip = new JSZip();
         for (const file of documents) {
             const docRef = await ref(storage, file.data.path);
             jszip.file(docRef.name, getBlob(docRef));
@@ -238,7 +239,7 @@ const ProjectDetail: React.FC = () => {
                                 </Flex>
 
                                 {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && (
-                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role}/>
+                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role} />
                                 )}
                                 {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>

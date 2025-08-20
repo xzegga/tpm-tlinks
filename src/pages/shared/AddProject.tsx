@@ -9,7 +9,7 @@ import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import {
   Box, Breadcrumb, BreadcrumbItem, Button, Checkbox, CircularProgress, Container, Flex,
   FormControl, FormLabel, Heading, Input, InputGroup, Select, Spacer, Stack, Text, Textarea,
-  VStack, Wrap, WrapItem
+  VStack, Wrap, WrapItem, Spinner
 } from '@chakra-ui/react';
 
 import Urgent from '../../assets/isUrgent.svg?react';
@@ -69,9 +69,9 @@ const AddProject: React.FC = () => {
 
   }, []);
 
-  const saveRequest = async () => {
-    if (!files) return;
 
+  const saveRequest = async () => {
+    if (!files || saving) return;
     if (currentUser) {
       await validate();
       setSaving(true, () => console.log);
@@ -203,7 +203,7 @@ const AddProject: React.FC = () => {
                                   size="md"
                                   flex={1}
                                 >
-                                  
+
                                   {
                                     currentUser.role === ROLES.Admin ?
                                       <>
@@ -323,8 +323,9 @@ const AddProject: React.FC = () => {
                             </FormControl>
                             <FormControl id="name" float="right">
                               {files.length > 0 ? (
-                                <Button variant="outline" color="white" onClick={saveRequest}>
+                                <Button colorScheme={saving ? "gray" : "blue"} disabled={saving} onClick={saveRequest}>
                                   Submit Project
+                                  {saving ? <Spinner size="xs" ml={2} /> : null}
                                 </Button>
                               ) : (
                                 <Text color={'yellow.300'}>
@@ -363,8 +364,8 @@ const AddProject: React.FC = () => {
                 </Flex>
               )}
             </Flex>
-          </Box>
-        </Container>
+          </Box >
+        </Container >
       )}
     </>
   );

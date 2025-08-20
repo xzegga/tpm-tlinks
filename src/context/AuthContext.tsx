@@ -115,34 +115,8 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
 
   }
 
-  const assignCustomClaims = async (userWithClaims: any) => {
-    try {
-      const functions = getFunctions();
-      const callableAssignCustomClaims = httpsCallable(functions, 'assignUserClaims');
-
-      await callableAssignCustomClaims(userWithClaims);
-
-      console.log({ userWithClaims });
-    } catch (error) {
-      // Handle error
-      console.error();
-    } finally {
-      setState({ loading: false })
-    }
-  };
-
   const loginSuccess = async (usr: any) => {
     if (usr) {
-
-      const userWithClaims = {
-        email: 'raul.escamilla@asesoriait.com',
-        customClaims: {
-          role: 'admin',
-        },
-        token: usr.accessToken
-      }
-      await assignCustomClaims(userWithClaims);
-
       setAuthUser(usr);
       // Read claims from the user object
 

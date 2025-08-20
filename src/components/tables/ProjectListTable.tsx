@@ -55,18 +55,12 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
 
                     setTranslators(usersData?.data || []);
                 }
-                setState({ loading: false, loadingMore: false});
+                setState({ loading: false, loadingMore: false });
             }
 
         } catch (error) {
             // Handle error
-            toast({
-                title: 'Error getting translators',
-                description: 'There is an error getting the translator list ' + error,
-                status: 'error',
-                duration: 9000,
-                isClosable: true
-            });
+            setTranslators([]);
             setState({ loading: false, loadingMore: false });
         }
     };
@@ -112,7 +106,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                             {urgentProjects.map((project: ProjectObject) => (
                                 <ProjectRow key={project.id}
                                     project={project}
-                                    removeProject={removeProject} 
+                                    removeProject={removeProject}
                                     translators={translators} />
                             ))}
                         </Tbody>
