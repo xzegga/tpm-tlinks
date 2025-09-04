@@ -18,11 +18,11 @@ export default async function setRoles(request: CallableRequest<any>) {
     }
 
     const auth = getAuth();
-    //const validToken: DecodedIdToken = await auth.verifyIdToken(token);
+    const validToken: DecodedIdToken = await auth.verifyIdToken(token);
 
-    // if (!validToken || validToken.role !== "admin") {
-    //   return new HttpsError("internal", "Permissions denied");
-    // }
+    if (!validToken || validToken.role !== 'admin') {
+        return new HttpsError('internal', 'Permissions denied');
+    }
 
     try {
         const user = await auth.getUserByEmail(email);

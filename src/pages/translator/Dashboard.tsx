@@ -24,7 +24,6 @@ const Dashboard: React.FC = () => {
     const toast = useToast();
     const { validate } = useAuth();
     const {
-        tenant,
         currentUser,
         pagination,
         status,
@@ -36,7 +35,7 @@ const Dashboard: React.FC = () => {
         setState } = useStore()
 
     const [projects, setProjects] = useState<ProjectObject[]>([]);
-    const [project, setProject] = useState<ProjectObject>();
+    const [project] = useState<ProjectObject>();
     const { debounce } = useProjectExtras(project);
 
     const [lastDoc, setLastDoc] = useState<string>();
@@ -88,7 +87,7 @@ const Dashboard: React.FC = () => {
                 if (currentUser.role === ROLES.Admin) {
                     tenant = tenantQuery && tenantQuery !== '' ? tenantQuery : currentUser.tenant;
                 }
-                console.log({status})
+                console.log({ status })
                 const projectData: any = await getAllProjets({
                     status,
                     monthSelected,
@@ -288,7 +287,7 @@ const Dashboard: React.FC = () => {
                         <Box>
                             <ProjectListTable
                                 projects={projects}
-                                removeProject={()=>{}} />
+                                removeProject={() => { }} />
                             <Spacer mt={10} />
                             <Center>
                                 Showing {projects.length} of {count ? count : 0} projects

@@ -51,3 +51,46 @@ export const verifyToken = onCall(async (request) => {
         return { valid: false };
     }
 });
+
+export const seedAdminClaim = onCall(async (request) => {
+    // Solo permitir en emulador
+    console.log('FUNCTIONS_EMULATOR:', process.env.FUNCTIONS_EMULATOR);
+    if (process.env.FUNCTIONS_EMULATOR !== 'true') {
+        throw new Error('This function is only available in the emulator');
+    }
+
+    try {
+        // Buscar usuario por email
+        const email = process.env.SEED_ADMIN_EMAIL || '';
+        const user = await getAuth().getUserByEmail(email);
+
+        const claims = {
+            role: 'admin',
+            tenant: 'ChildrenHospital',
+            department: 'all'
+        };
+        // Asignar claims
+        await getAuth().setCustomUserClaims(user.uid, claims);
+
+        logger.info(`Admin claim set for user ${user.email}`);
+
+        await db
+            .collection('users')
+            .doc(user.uid)
+            .set(
+                {
+                    email: user.email,
+                    ...claims
+                },
+                { merge: true }
+            );
+
+        logger.info(`Admin values set for user ${user.email} in Firestore`);
+        const modified = await getAuth().getUserByEmail(email);
+
+        return { modified };
+    } catch (error: any) {
+        logger.error('Error setting claim', error);
+        throw new Error(error.message);
+    }
+});

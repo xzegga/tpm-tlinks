@@ -238,7 +238,7 @@ const ProjectDetail: React.FC = () => {
                                 </Flex>
 
                                 {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && (
-                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role}/>
+                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role} />
                                 )}
                                 {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>
@@ -287,7 +287,7 @@ const ProjectDetail: React.FC = () => {
 
 
                                 {project?.data?.status === 'Completed' &&
-                                    <ChangeStatusSelector setProject={setProject} project={project} button={true} />
+                                    <ChangeStatusSelector setProject={setProject} project={project} button={true} role={currentUser.role} />
                                 }
                             </Flex>
                         </Flex>

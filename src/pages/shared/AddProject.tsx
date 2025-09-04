@@ -39,7 +39,8 @@ const initialState: Project = {
   documents: [],
   isUrgent: false,
   tenant: '',
-  department: ''
+  department: '',
+  translatorId: ''
 };
 
 const AddProject: React.FC = () => {
@@ -203,7 +204,7 @@ const AddProject: React.FC = () => {
                                   size="md"
                                   flex={1}
                                 >
-                                  
+
                                   {
                                     currentUser.role === ROLES.Admin ?
                                       <>

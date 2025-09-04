@@ -115,8 +115,9 @@ const Dashboard: React.FC = () => {
         setRequestdb(req);
     }
 
-    const removeInvalidProps = (obj) => {
+    const removeInvalidProps = (obj: any) => {
         return Object.fromEntries(
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             Object.entries(obj).filter(([_, value]) => value !== undefined && value !== null)
         );
     };
@@ -154,7 +155,7 @@ const Dashboard: React.FC = () => {
                         ...projectData?.data?.projects || []
                     ]);
                 }
-                setState({projectTranslators: projectData?.data?.translators || []});
+                setState({ projectTranslators: projectData?.data?.translators || [] });
                 setLastDoc(projectData?.data.lastDoc || null);
                 setCount(projectData?.data?.count);
                 setState({ loading: false, loadingMore: false });
@@ -380,7 +381,7 @@ const Dashboard: React.FC = () => {
                                 <Flex alignItems={'center'} gap={3} py={2} px={4}
                                 >
                                     <Text>Change Status</Text>
-                                    <ChangeStatusSelector ids={selectedIds} onSuccess={onChangeStatusSuccess} role={currentUser.role}/>
+                                    <ChangeStatusSelector ids={selectedIds} onSuccess={onChangeStatusSuccess} role={currentUser.role} />
                                 </Flex>
                             </Box>
                             : null}
