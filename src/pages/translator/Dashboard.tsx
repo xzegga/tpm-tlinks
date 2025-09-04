@@ -24,7 +24,6 @@ const Dashboard: React.FC = () => {
     const toast = useToast();
     const { validate } = useAuth();
     const {
-        tenant,
         currentUser,
         pagination,
         status,
@@ -36,7 +35,7 @@ const Dashboard: React.FC = () => {
         setState } = useStore()
 
     const [projects, setProjects] = useState<ProjectObject[]>([]);
-    const [project, setProject] = useState<ProjectObject>();
+    const [project] = useState<ProjectObject>();
     const { debounce } = useProjectExtras(project);
 
     const [lastDoc, setLastDoc] = useState<string>();

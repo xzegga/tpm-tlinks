@@ -288,7 +288,7 @@ const ProjectDetail: React.FC = () => {
 
 
                                 {project?.data?.status === 'Completed' &&
-                                    <ChangeStatusSelector setProject={setProject} project={project} button={true} />
+                                    <ChangeStatusSelector setProject={setProject} project={project} button={true} role={currentUser.role} />
                                 }
                             </Flex>
                         </Flex>

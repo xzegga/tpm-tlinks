@@ -23,8 +23,9 @@ const DatePicker: React.FC<DatePickerProps> = ({ handleDate, restrictDate = fals
 
     const handleSelectDate = (date: CalendarDate | CalendarValues) => {
         const calendarDate = date as CalendarDate;
+        const jsDate = calendarDate.toString()
         setDate(calendarDate)
-        setValue(() => (isValid(date) ? format(calendarDate, 'MM/dd/yyyy') : format(addDays(new Date(), 5), 'MM/dd/yyyy')))
+        setValue(() => (isValid(jsDate) ? format(calendarDate, 'MM/dd/yyyy') : format(addDays(new Date(), 5), 'MM/dd/yyyy')))
         onClose()
     }
 

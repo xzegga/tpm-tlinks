@@ -39,7 +39,8 @@ const initialState: Project = {
   documents: [],
   isUrgent: false,
   tenant: '',
-  department: ''
+  department: '',
+  translatorId: ''
 };
 
 const AddProject: React.FC = () => {
