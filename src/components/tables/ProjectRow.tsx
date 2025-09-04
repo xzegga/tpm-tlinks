@@ -34,7 +34,7 @@ const stripped = {
 
 const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, translators }) => {
     const navigate = useNavigate();
-    const { status, loading: projectLoading, currentUser, selectedIds, projectTranslators, setState } = useStore();
+    const { status, loading: projectLoading, currentUser, selectedIds, projectTranslators, setState, tenant } = useStore();
     const toast = useToast()
     const {
         loading,
@@ -83,7 +83,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
 
         try {
             if (translatorId) {
-                setState({ loading: true});
+                setState({ loading: true });
                 // If translatorId is provided, assign it to the project
                 await updateTranslatorId(projectId, translatorId);
                 toast({
@@ -102,7 +102,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                     isClosable: true,
                 });
             }
-            setState({ loading: false, refresh: true});
+            setState({ loading: false, refresh: true });
         } catch (error) {
             // Handle errors for both assign and remove operations
             console.error("Failed to assign/remove translator:", error);
@@ -245,42 +245,55 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
             >
                 {project.data.status && <Status status={project.data.status} />}
             </LinkBox>
-            {currentUser?.role !== ROLES.Translator && project.data.status === 'Received' ? <>
-                <Td px={1.5} py={0.5}>
-                    <FormControl id="wordCount_number">
+            {tenant.translators ? <>
+                {currentUser?.role !== ROLES.Translator && project.data.status === 'Received' ? <>
+                    <Td px={1.5} py={0.5}>
+                        <FormControl id="wordCount_number">
+                            <Select
+                                h={'30px'}
+                                maxW={'180px'}
+                                name="department"
+                                value={project.data.translatorId}
+                                onChange={(e) => assignTranslator(e.target.value, project)}
+                            >
+                                <option value=''>Select</option>
+                                {translators?.length && translators?.map((translator: any) => (
+                                    <option
+                                        key={translator.uid}
+                                        value={translator.uid}
+                                    >{translator.name}</option>
+
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Td>
+                </> : <Td px={1.5} py={0.5}>
+                    {currentUser?.role !== ROLES.Translator && project.data.status !== 'Assigned' ?
                         <Select
                             h={'30px'}
                             maxW={'180px'}
                             name="department"
-                            value={project.data.translatorId}
-                            onChange={(e) => assignTranslator(e.target.value, project)}
+                            disabled={true}
                         >
                             <option value=''>Select</option>
-                            {translators?.length && translators?.map((translator: any) => (
-                                <option
-                                    key={translator.uid}
-                                    value={translator.uid}
-                                >{translator.name}</option>
-
-                            ))}
                         </Select>
-                    </FormControl>
-                </Td>
+                        : null}
+
+                    {currentUser?.role !== ROLES.Translator && project.data.status === 'Assigned' ? <>
+                        {getAssignedProjectTranslator(project.id) !== undefined ?
+                            <Tag size={'sm'} py={'2px'} variant='outline' colorScheme='blue'>
+                                <TagLabel>
+                                    <Tooltip label={getAssignedProjectTranslator(project.id)} aria-label='A tooltip'>
+                                        {shortenFileName(getAssignedProjectTranslator(project.id) || '', 10)}
+                                    </Tooltip>
+                                </TagLabel>
+                                <TagCloseButton onClick={() => assignTranslator(null, project)} />
+                            </Tag> : null
+                        }
+                    </> : null}
+                </Td>}
             </> : null}
-            {currentUser?.role !== ROLES.Translator && project.data.status === 'Assigned' ? <>
-                <Td px={1.5} py={0.5}>
-                    {getAssignedProjectTranslator(project.id) !== undefined ?
-                        <Tag size={'sm'} py={'2px'} variant='outline' colorScheme='blue'>
-                            <TagLabel>
-                                <Tooltip label={getAssignedProjectTranslator(project.id)} aria-label='A tooltip'>
-                                    {shortenFileName(getAssignedProjectTranslator(project.id) || '', 10)}
-                                </Tooltip>
-                            </TagLabel>
-                            <TagCloseButton onClick={()=>assignTranslator(null, project)} />
-                        </Tag> : null
-                    }
-                </Td>
-            </> : null}
+
             {currentUser?.role === ROLES.Admin ? <>
                 <Td px={1.5} py={0.5}>
                     <FormControl id="wordCount_number">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Box, Center, Flex, Spinner, Table, Tbody, Td, Th, Thead, Tr, useToast } from '@chakra-ui/react';
+import { Box, Center, Flex, Spinner, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
 
 import { useStore } from '../../hooks/useGlobalStore';
 import { ProjectObject } from '../../models/project';
@@ -16,12 +16,10 @@ interface ProjectListTableProps {
 
 const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removeProject }) => {
     const { currentUser } = useStore();
-    const { status, loading, loadingMore } = useStore()
+    const { status, loading, loadingMore, tenant } = useStore()
     const { validate } = useAuth();
     const { setState } = useStore()
     const [translators, setTranslators] = useState([]);
-    const toast = useToast();
-
     const [urgentProjects, setUrgentProjects] = useState<ProjectObject[]>([]);
     const [commonProjects, setCommonProjects] = useState<ProjectObject[]>([]);
 
@@ -94,7 +92,10 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>Target</Th>
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
-                                {currentUser.role !== ROLES.Translator && <Th px={1} textAlign={'center'}>Translator</Th>}
+
+                                {currentUser.role !== ROLES.Translator &&
+                                    tenant?.translators &&
+                                    <Th px={1} textAlign={'center'}>Translator</Th>}
                                 {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>
@@ -124,7 +125,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>Target</Th>
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
-                                {currentUser.role !== ROLES.Translator && <Th px={1} textAlign={'center'}>Translator</Th>}
+                                {currentUser.role !== ROLES.Translator && tenant.translators && <Th px={1} textAlign={'center'}>Translator</Th>}
                                 {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>

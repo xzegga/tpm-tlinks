@@ -154,7 +154,7 @@ const Dashboard: React.FC = () => {
                         ...projectData?.data?.projects || []
                     ]);
                 }
-                setState({projectTranslators: projectData?.data?.translators || []});
+                setState({ projectTranslators: projectData?.data?.translators || [] });
                 setLastDoc(projectData?.data.lastDoc || null);
                 setCount(projectData?.data?.count);
                 setState({ loading: false, loadingMore: false });
@@ -216,7 +216,7 @@ const Dashboard: React.FC = () => {
         <>
             {currentUser && (
                 <>
-                    <Container maxW="container.lg" w={'container.lg'} overflowX="auto" py={4}>
+                    <Container minW={'100%'} px={0} mx={0} overflowX="auto" py={4}>
                         <Flex mb="1" alignItems={'center'}>
                             <Heading size="md" whiteSpace={'nowrap'} pl={3}>
                                 <Flex alignItems={'center'} gap={3}>
@@ -380,7 +380,7 @@ const Dashboard: React.FC = () => {
                                 <Flex alignItems={'center'} gap={3} py={2} px={4}
                                 >
                                     <Text>Change Status</Text>
-                                    <ChangeStatusSelector ids={selectedIds} onSuccess={onChangeStatusSuccess} role={currentUser.role}/>
+                                    <ChangeStatusSelector ids={selectedIds} onSuccess={onChangeStatusSuccess} role={currentUser.role} />
                                 </Flex>
                             </Box>
                             : null}

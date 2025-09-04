@@ -42,7 +42,7 @@ export const getAllTenants = async (token: string): Promise<Tenant[]> => {
     });
 
     if (Array.isArray(results.data)) {
-        const tenants = results?.data.map((item) => ({id: item.id, ...item.data}));
+        const tenants = results?.data.map((item) => ({ id: item.id, ...item.data }));
         return tenants as Tenant[];
     }
 
@@ -69,7 +69,8 @@ export const getTenantBySlug = async (slug: string): Promise<Tenant | null> => {
             created: tenantData.created,
             code: tenantData.code,
             image: tenantData.image || '',
-            export: tenantData.export || false
+            export: tenantData.export || false,
+            translators: tenantData.translators || false
         } as Tenant;
     } catch (error) {
         console.error('Error fetching tenant:', error);
@@ -100,7 +101,8 @@ export async function updateTenant(tenant: Tenant, file?: File | null) {
             name: tenant.name,
             departments: tenant.departments,
             code: tenant.code,
-            export: tenant.export || false
+            export: tenant.export || false,
+            translators: tenant.translators || false
         };
 
         // Optionally update image if a new file is provided

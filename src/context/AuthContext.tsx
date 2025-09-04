@@ -16,8 +16,7 @@ import { ROLES } from '../models/users';
 import { useStore } from '../hooks/useGlobalStore';
 import { LoggedUser, initialGlobalState } from '../store/initialGlobalState';
 import { getUserById, validateSession } from '../data/users';
-import usePreviousRoute, { STORAGE_KEY } from '../hooks/usePreviousRoute';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { STORAGE_KEY } from '../hooks/usePreviousRoute';
 
 export type User = firebase.User | null;
 

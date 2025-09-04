@@ -1,17 +1,11 @@
-import { DocumentReference, DocumentData, addDoc, collection, Timestamp, doc, deleteDoc, getDocs, getDoc } from "firebase/firestore";
-import { deleteObject, listAll, ref, uploadBytesResumable } from "firebase/storage";
-import { Doc, DocumentObject, ProcessedDocument, Document } from "../models/document";
-import { Project, ProjectObject } from "../models/project";
-import { createFileName } from "../utils/helpers";
-import { db, storage } from "../utils/init-firebase";
+import { DocumentReference, DocumentData, addDoc, collection, Timestamp, doc, deleteDoc, getDocs, getDoc } from 'firebase/firestore';
+import { deleteObject, listAll, ref, uploadBytesResumable } from 'firebase/storage';
+import { Doc, DocumentObject, ProcessedDocument, Document } from '../models/document';
+import { Project, ProjectObject } from '../models/project';
+import { createFileName } from '../utils/helpers';
+import { db, storage } from '../utils/init-firebase';
 
-export const saveDocuments = (
-    documents: Doc[], 
-    project: Project, 
-    projectRef: DocumentReference<DocumentData>,
-    code: string
-) => {
-
+export const saveDocuments = (documents: Doc[], project: Project, projectRef: DocumentReference<DocumentData>, code: string) => {
     const promises: any[] = [];
     // Get month name of current date
     const month = new Date().toLocaleString('default', { month: 'long' });
@@ -30,7 +24,6 @@ export const saveDocuments = (
 
     Promise.all(promises)
         .then((files) => {
-
             const documentRef = collection(projectRef, 'documents');
 
             files.forEach(async (file, index) => {
@@ -39,17 +32,15 @@ export const saveDocuments = (
                     name: file.metadata.name,
                     path: file.metadata.fullPath,
                     target: documents[index].target
-                })
+                });
             });
 
             return 'success';
-
         })
-        .catch(error => {
-            console.error(error.message)
+        .catch((error) => {
+            console.error(error.message);
         });
-
-}
+};
 
 export const saveCertificate = async (file: File, project: ProjectObject, projectRef: DocumentReference<DocumentData>) => {
     const promises: any[] = [];
@@ -59,16 +50,15 @@ export const saveCertificate = async (file: File, project: ProjectObject, projec
     const code = project.data.projectId;
     const tenant = project.data.tenant;
 
-
     const path = `/${tenant}/${year}/${month}/${code}/Certificate/${file.name}`;
     const storageRef = ref(storage, path);
 
     const uploadTask = uploadBytesResumable(storageRef, file);
     promises.push(uploadTask);
 
-    const results = await Promise.all(promises)
+    const results = await Promise.all(promises);
 
-    const filesUploaded: any = []
+    const filesUploaded: any = [];
     for (const file of results) {
         try {
             const documentRef = collection(projectRef, 'documents');
@@ -79,13 +69,13 @@ export const saveCertificate = async (file: File, project: ProjectObject, projec
                     path: file.metadata.fullPath,
                     isCertificate: true
                 })
-            )
+            );
         } catch (error) {
             console.log(error);
         }
     }
     return filesUploaded;
-}
+};
 
 export const saveMemory = async (file: File, project: ProjectObject, projectRef: DocumentReference<DocumentData>) => {
     const promises: any[] = [];
@@ -101,9 +91,9 @@ export const saveMemory = async (file: File, project: ProjectObject, projectRef:
     const uploadTask = uploadBytesResumable(storageRef, file);
     promises.push(uploadTask);
 
-    const results = await Promise.all(promises)
+    const results = await Promise.all(promises);
 
-    const filesUploaded: any = []
+    const filesUploaded: any = [];
     for (const file of results) {
         try {
             const documentRef = collection(projectRef, 'documents');
@@ -114,20 +104,15 @@ export const saveMemory = async (file: File, project: ProjectObject, projectRef:
                     path: file.metadata.fullPath,
                     isMemory: true
                 })
-            )
+            );
         } catch (error) {
             console.log(error);
         }
     }
     return filesUploaded;
-}
+};
 
-export const saveTargetDocuments = async (
-    fileList: FileList,
-    document: DocumentObject,
-    project: ProjectObject,
-    target: string
-) => {
+export const saveTargetDocuments = async (fileList: FileList, document: DocumentObject, project: ProjectObject, target: string) => {
     const month = new Date().toLocaleString('default', { month: 'long' });
     const year = new Date().getFullYear();
     const promises: any[] = [];
@@ -143,37 +128,33 @@ export const saveTargetDocuments = async (
         promises.push(uploadTask);
     });
 
-
     const projectRef = doc(collection(db, 'projects'), project.id);
     const documentRef = doc(collection(projectRef, 'documents'), document.id);
     const targetDocumentsRef = collection(documentRef, 'documents');
 
-    const filesUploaded: DocumentObject[] = []
+    const filesUploaded: DocumentObject[] = [];
     const files = await Promise.all(promises);
     for (const file of files) {
         try {
-
             const ref = await addDoc(targetDocumentsRef, {
                 created: Timestamp.now(),
                 name: file.metadata.name,
                 path: file.metadata.fullPath,
                 language: target
-            })
+            });
 
-            const docS = await getDoc(ref)
+            const docS = await getDoc(ref);
             filesUploaded.push({
                 id: docS.id,
                 data: docS.data() as Document
-            })
-
+            });
         } catch (error) {
             console.log(error);
         }
     }
 
     return filesUploaded;
-
-}
+};
 
 export const deleteDocument = async (projectId: string, documentId: string, document: DocumentObject) => {
     // Deleting phisical file
@@ -189,24 +170,22 @@ export const deleteDocument = async (projectId: string, documentId: string, docu
     if (document.data.isCertificate || document.data.isMemory) {
         await deleteDoc(documentRef);
     }
-}
+};
 
 export const getDocuments = async (projectId: string, documents: DocumentObject[]) => {
     if (projectId) {
         const projectRef = doc(collection(db, 'projects'), projectId);
-        let processed: ProcessedDocument[] = [];
+        const processed: ProcessedDocument[] = [];
 
         for (const document of documents) {
             const documentRef = doc(collection(projectRef, 'documents'), document.id);
             const targetDocumentsRef = collection(documentRef, 'documents');
 
             const targetDocuments = await getDocs(targetDocumentsRef);
-            const dataDocs = targetDocuments.docs.map((doc) => (
-                {
-                    id: doc.id,
-                    data: doc.data() as Document,
-                }
-            ));
+            const dataDocs = targetDocuments.docs.map((doc) => ({
+                id: doc.id,
+                data: doc.data() as Document
+            }));
 
             if (dataDocs.length) {
                 processed.push({
@@ -217,7 +196,7 @@ export const getDocuments = async (projectId: string, documents: DocumentObject[
         }
         return processed;
     }
-}
+};
 
 export const deleteDocuments = async (path: string) => {
     if (path.length) {
@@ -229,4 +208,4 @@ export const deleteDocuments = async (path: string) => {
             });
         });
     }
-}
+};

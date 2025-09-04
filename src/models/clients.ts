@@ -9,4 +9,5 @@ export type Tenant = {
     created?: Timestamp;
     image: string;
     export: boolean;
-}
+    translators: boolean;
+};

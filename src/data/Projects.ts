@@ -58,39 +58,38 @@ export const saveProject = async (project: Project, files: Doc[], tenant: Tenant
 export const updateTranslatorId = async (projectId: string, translatorId: string): Promise<void> => {
     try {
         // Reference to the specific project document
-        const projectRef = doc(db, "projects", projectId);
+        const projectRef = doc(db, 'projects', projectId);
 
         // Update the translatorId field
         await updateDoc(projectRef, {
             translatorId: translatorId,
-            status: "Assigned"
+            status: 'Assigned'
         });
 
         console.log(`Translator ID updated successfully for project: ${projectId}`);
     } catch (error) {
-        console.error("Error updating translator ID:", error);
-        throw new Error("Failed to update the translator ID. Please try again.");
+        console.error('Error updating translator ID:', error);
+        throw new Error('Failed to update the translator ID. Please try again.');
     }
 };
 
 export const removeTranslatorId = async (projectId: string): Promise<void> => {
     try {
         // Reference to the specific project document
-        const projectRef = doc(db, "projects", projectId);
+        const projectRef = doc(db, 'projects', projectId);
 
         // Update the document, removing the translatorId field
         await updateDoc(projectRef, {
-        translatorId: null, // Sets translatorId to null to indicate removal
-        status: STATUS.Received, // Optionally update the status field
+            translatorId: null, // Sets translatorId to null to indicate removal
+            status: STATUS.Received // Optionally update the status field
         });
 
         console.log(`Translator ID removed successfully for project: ${projectId}`);
     } catch (error) {
-        console.error("Error removing translator ID:", error);
-        throw new Error("Failed to remove the translator ID. Please try again.");
+        console.error('Error removing translator ID:', error);
+        throw new Error('Failed to remove the translator ID. Please try again.');
     }
 };
-
 
 export const getCorrelativeID = async (code: string, project?: Project) => {
     const created: Timestamp | undefined = project?.created;
@@ -162,7 +161,7 @@ export const deleteProject = async (id: string) => {
 export const updateComments = async (projectId: string, newComments: string) => {
     try {
         const projectRef = doc(db, 'projects', projectId);
-        await updateDoc(projectRef, { comments: newComments });
+        await updateDoc(projectRef, { comments: newComments || '' });
     } catch (error) {
         console.error('Error updating comments:', error);
     }
@@ -211,7 +210,6 @@ export const updateWordCount = async (projectId: string, wordCount: number) => {
 //     console.log('done')
 // };
 
-
 export const updateStatus = async (ids: string[], status: string) => {
     // Initialize a Firestore write batch
     const batch = writeBatch(db);
@@ -228,8 +226,8 @@ export const updateStatus = async (ids: string[], status: string) => {
     try {
         // Commit the batch operation
         await batch.commit();
-        return {type: 'success', message: 'Batch update successful'};
+        return { type: 'success', message: 'Batch update successful' };
     } catch (error) {
-        return {type: 'error', message: 'Error updating projects'};
+        return { type: 'error', message: 'Error updating projects' };
     }
 };

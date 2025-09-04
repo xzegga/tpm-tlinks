@@ -30,7 +30,7 @@ const NavigationBar: React.FC = () => {
         const importSvgIcon = async (): Promise<void> => {
             try {
                 const tenant = await getTenantBySlug(currentUser.tenant)
-                if(tenant) setState({tenant})
+                if (tenant) setState({ tenant })
                 if (tenant?.image) {
                     const src = await getImageUrl(tenant.image);
                     if (src) setLogo(src);
@@ -66,9 +66,10 @@ const NavigationBar: React.FC = () => {
         >
             <HStack
                 justifyContent='flex-end'
-                maxW='container.lg'
+                maxW='container.xl'
                 mx='auto'
                 spacing={4}
+                minW={'100%'}
             >
                 <Image src={Logo} maxH="50px" />
                 <Spacer />

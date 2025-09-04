@@ -38,7 +38,7 @@ export default function useProjectExtras(
 
     // Function to handle text change
     const handleCommentChange = async (e: ChangeEvent<HTMLTextAreaElement>) => {
-        if (e?.target?.value !== '' && project) {
+        if (project) {
             setLoading({ ...loading, comments: true })
             await updateComments(project.id, e?.target?.value)
             setLoading({ ...loading, comments: false })
@@ -66,8 +66,8 @@ export default function useProjectExtras(
         }
     };
 
-    const handleRefresh = () =>{
-        setState({refresh: true});
+    const handleRefresh = () => {
+        setState({ refresh: true });
     }
 
     const dbHandleCommentChange = useMemo(() => debounce(handleCommentChange, 300), []);

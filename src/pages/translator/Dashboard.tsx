@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
                 if (currentUser.role === ROLES.Admin) {
                     tenant = tenantQuery && tenantQuery !== '' ? tenantQuery : currentUser.tenant;
                 }
-                console.log({status})
+                console.log({ status })
                 const projectData: any = await getAllProjets({
                     status,
                     monthSelected,
@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
         <>
             {currentUser && (
                 <>
-                    <Container maxW="container.lg" w={'container.lg'} overflowX="auto" py={4}>
+                    <Container maxW="container.xl" w={'container.xl'} overflowX="auto" py={4}>
                         <Flex mb="1" alignItems={'center'}>
                             <Heading size="md" whiteSpace={'nowrap'} pl={3}>
                                 <Flex alignItems={'center'} gap={3}>
@@ -288,7 +288,7 @@ const Dashboard: React.FC = () => {
                         <Box>
                             <ProjectListTable
                                 projects={projects}
-                                removeProject={()=>{}} />
+                                removeProject={() => { }} />
                             <Spacer mt={10} />
                             <Center>
                                 Showing {projects.length} of {count ? count : 0} projects

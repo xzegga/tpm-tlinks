@@ -23,11 +23,12 @@ const Tenants: React.FC = () => {
     const [departments, setDepartments] = useState<string>('');
     const [code, setCode] = useState<string>('');
     const [checked, setChecked] = useState<boolean>();
+    const [checkedT, setCheckedT] = useState<boolean>();
     const [file, setFile] = useState<File | null>(null);
     const { currentUser, setState, loading } = useStore();
     const [images, setImages] = useState<Record<string, string | null>>({});
     const toast = useToast()
-    
+
     const {
         getRootProps,
         getInputProps
@@ -82,12 +83,24 @@ const Tenants: React.FC = () => {
         setDepartments(e.target.value)
     };
 
-    const setCheckedItems = (chk: boolean)=>{
+    const setCheckedItems = (chk: boolean) => {
         setTenant({
             ...tenant,
             export: chk,
         } as Tenant);
         setChecked(checked)
+    }
+
+    const setTranslator = (chk: boolean) => {
+        setTenant({
+            ...tenant,
+            translators: chk,
+        } as Tenant);
+        console.log({
+            ...tenant,
+            translators: chk,
+        })
+        setCheckedT(checkedT)
     }
 
     const saveRequest = async () => {
@@ -107,9 +120,11 @@ const Tenants: React.FC = () => {
             if (tenant.id) {
                 await updateTenant(tenant, file);
 
-                const newTenants = [ ...tenants ];
+                const newTenants = [...tenants];
                 const index = newTenants.findIndex(item => item.id === tenant.id)
+
                 const expt = tenant.export ? true : false;
+                const trs = tenant.translators ? true : false;
                 if (index !== -1) {
                     newTenants[index] = {
                         ...newTenants[index],
@@ -117,6 +132,7 @@ const Tenants: React.FC = () => {
                         departments: tenant.departments,
                         code: tenant.code,
                         export: expt,
+                        translators: trs,
                         ...(file && { image: `/ClientLogos/${file?.name}` })
                     }
                     setTenants(newTenants)
@@ -149,10 +165,6 @@ const Tenants: React.FC = () => {
         fetchTenantImages();
     }, [tenants])
 
-
-    useEffect(()=>{
-        console.log(tenants)
-    }, [tenant])
 
     return <>
         {currentUser ?
@@ -206,28 +218,36 @@ const Tenants: React.FC = () => {
                                         </Flex>
                                     </Box>
                                     <Button colorScheme={'blue'} variant='outline' onClick={cancelHandle}>Cancel</Button>
-                                    <Button 
+                                    <Button
                                         isLoading={loading}
-                                        colorScheme={'blue'} 
+                                        colorScheme={'blue'}
                                         loadingText='Saving'
                                         onClick={saveRequest}
                                         spinnerPlacement='start'
-                                        >{
-                                        tenant?.id ? <Text>Update Client</Text> : <Text>Add Client</Text>
-                                    }</Button>
+                                    >{
+                                            tenant?.id ? <Text>Update Client</Text> : <Text>Add Client</Text>
+                                        }</Button>
                                 </Flex>
                             </InputGroup>
                         </FormControl>
                     </Flex>
-                    <Flex mt={2}>
-                        <FormControl id="code" flex={1}>
+                    <Flex mt={2} alignContent={'flex-start'}>
+                        <FormControl id="code" maxW={200} mr={10}>
                             <InputGroup borderColor="#E0E1E7" h={10} >
-                                <Checkbox 
+                                <Checkbox
                                     isChecked={tenant?.export}
                                     onChange={(e) => setCheckedItems(e.target.checked)}
                                 >Export billing report</Checkbox>
                             </InputGroup>
-                        </FormControl>  
+                        </FormControl>
+                        <FormControl id="code">
+                            <InputGroup borderColor="#E0E1E7" h={10} >
+                                <Checkbox
+                                    isChecked={tenant?.translators || false}
+                                    onChange={(e) => setTranslator(e.target.checked)}
+                                >Enable Client Translators</Checkbox>
+                            </InputGroup>
+                        </FormControl>
                     </Flex>
                 </Box>
                 <Box>
@@ -278,7 +298,8 @@ const Tenants: React.FC = () => {
                     )
                     }
                 </Box>
-            </Container> : null} </>;
+            </Container > : null
+        } </>;
 };
 
 export default Tenants;
