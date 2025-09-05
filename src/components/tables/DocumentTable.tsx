@@ -11,6 +11,7 @@ import { deleteDocument } from '../../data/Documents';
 import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
 import TradosLogo from '../../assets/Trados.png';
+import { useDocResult } from '../../hooks/useDocResult';
 
 interface DocumentsTableProps {
     documents: DocumentObject[];
@@ -40,6 +41,8 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
     uploadFile }) => {
 
     const { currentUser } = useStore();
+
+    const { getDocTypeInfo, buildResultDocs } = useDocResult();
 
     const [isDeleting, setIsDeleting] = React.useState(false)
     const [documentToDelete, setDocumentToDelete] = React.useState<any>(null)
@@ -125,7 +128,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
 
 
 
-            if (doc.data.isCertificate || doc.data.isMemory) {
+            if (doc.data.isCertificate || doc.data.isMemory || doc.data.isBittext || doc.data.isGlossary) {
                 const newDocuments = documents.filter((doc) => doc.id !== documentId);
                 setDocuments(newDocuments);
             } else {
@@ -148,11 +151,15 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
         }
     }
 
+    const result = buildResultDocs(documents);
+    console.log(documents.find(doc => doc.data.isBittext));
+    
+
     return (
         <Box p={3} fontSize={'14px'}>
 
             <Box pb={2} mb={3} pl={1} borderBottom={'1px'} borderColor={'gray.300'} color={'gray.500'}>File List</Box>
-            {certificate && <Box>
+            {/* {certificate && <Box>
                 <Flex justifyContent={'space-between'}
                     alignItems={'center'} mb={2} mt={2} pb={3}
                     style={{ borderBottom: '1px solid #cdcdcd' }} >
@@ -181,10 +188,10 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                             </>}
                     </Flex>
                 </Flex>
-            </Box>}
+            </Box>} */}
 
 
-            {memory && <Box>
+            {/* {memory && <Box>
                 <Flex justifyContent={'space-between'}
                     alignItems={'center'} mb={2} mt={2} pb={3}
                     style={{ borderBottom: '1px solid #cdcdcd' }} >
@@ -213,11 +220,44 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                             </>}
                     </Flex>
                 </Flex>
-            </Box>}
+            </Box>} */}
+
+            {result.map((doc) => (
+                <Box key={doc.id}>
+                <Flex justifyContent={'space-between'}
+                    alignItems={'center'} mb={2} mt={2} pb={3}
+                    style={{ borderBottom: '1px solid #cdcdcd' }} >
+                    <Flex pl={2}>
+                        <Flex alignItems={'center'}>
+                            <Box width={7} mr={3} color={'green'}>
+                                {doc.icon}
+                            </Box>
+                            <Text fontWeight={'bold'} fontSize={16} mr={2}>{doc.typeLabel}: </Text>
+                            <Text>{doc.name}</Text>
+                        </Flex>
+                    </Flex>
+                    <Flex pr={5} alignItems={'center'}>
+
+                        <Link color='blue.400' onClick={() => downloadFile(doc.data.path, doc.name)}>
+                            <Flex justifyContent={'end'} alignItems={'center'}>
+                                <AiOutlineDownload />
+                                <Text ml={2}>Download</Text>
+                            </Flex>
+                        </Link>
+
+                        {(currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator ) &&
+                            <>
+                                <Divider orientation={'vertical'} mx={3} h={'15px'} w={'1px'} />
+                                <DeleteIcon onClick={() => removeFile(doc.id, doc)} cursor={'pointer'} color={'red.400'} />
+                            </>}
+                    </Flex>
+                </Flex>
+            </Box>
+            ))}
             <Box paddingTop={3}>
             {documents.map((doc) =>
                 <Box key={doc.id}>
-                    {!doc.data.isCertificate && !doc.data.isMemory &&
+                    {!doc.data.isCertificate && !doc.data.isMemory && !doc.data.isBittext &&
                         <Box key={doc.id} mb={10}>
                             <Flex justifyContent={'space-between'} alignItems={'center'} mb={2} mt={5}>
                                 <Box pl={2}>

@@ -30,7 +30,7 @@ const initialState: Project = {
   isEditing: false,
   isTranslation: true,
   isCertificate: false,
-  isBitext: false,
+  isBittext: false,
   isGlossary: false,
   isMemory: false,
   isStyleSheet: false,
@@ -310,8 +310,8 @@ const AddProject: React.FC = () => {
                                 <Checkbox name="isCertificate" id="isCertificate" checked={project.isCertificate} onChange={handleCheckbox}>
                                   Requires certification
                                 </Checkbox>
-                                <Checkbox required name="isBitext" id="isBitext"
-                                  checked={project.isBitext} onChange={handleCheckbox}>
+                                <Checkbox required name="isBittext" id="isBittext"
+                                  checked={project.isBittext} onChange={handleCheckbox}>
                                   Bitext
                                 </Checkbox>
                                 <Checkbox name="isGlossary" id="isGlossary" checked={project.isGlossary} onChange={handleCheckbox}>

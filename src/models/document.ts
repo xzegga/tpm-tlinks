@@ -8,16 +8,24 @@ export interface Document {
     type: string;
     language?: string;
     isCertificate?: boolean;
-    isBitext?: boolean;
+    isBittext?: boolean;
     isGlossary?: boolean;
     isStyleSheet?: boolean;
-    isMemory: string;
+    isMemory?: boolean;
 }
 
 export interface DocumentObject {
     id: string;
     data: Document;
 }
+
+export type ResultDoc = {
+    id: string,
+    name: string;
+    data: Document;
+    typeLabel: string;
+    icon: JSX.Element;
+};
 
 export interface Doc {
     file: File;

@@ -37,7 +37,7 @@ export const saveProject = async (project: Project, files: Doc[], tenant: Tenant
             isEditing: project.isEditing,
             isTranslation: project.isTranslation,
             isCertificate: project.isCertificate,
-            isBitext: project.isBitext,
+            isBittext: project.isBittext,
             isGlossary: project.isGlossary,
             isMemory: project.isMemory,
             isStyleSheet: project.isStyleSheet,

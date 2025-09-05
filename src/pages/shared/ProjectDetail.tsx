@@ -1,4 +1,4 @@
-import { Container, Flex, Box, Breadcrumb, BreadcrumbItem, Spacer, Text, Heading, useToast, Button, CircularProgress } from '@chakra-ui/react';
+import { Container, Flex, Box, Breadcrumb, BreadcrumbItem, Spacer, Text, Heading, useToast, Button, CircularProgress, Wrap } from '@chakra-ui/react';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import React, { useEffect } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
@@ -23,7 +23,21 @@ import JSZip from 'jszip';
 import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
 import ChangeStatusSelector from '../../components/ChangeStatus';
+import { useDocResult } from '../../hooks/useDocResult';
 
+export const DocumentType = {
+    Certificate: 'Certificate',
+    Memory: 'Memory',
+    Glossary: 'Glossary',
+    Bittext: 'Bittext',
+    StyleSheet: 'StyleSheet'
+} as const;
+
+type DocumentType = 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet'
+type DocumentsBtn = {
+    type: DocumentType,
+    doc: DocumentObject
+}
 
 const ProjectDetail: React.FC = () => {
     const { projectId } = useParams();
@@ -40,7 +54,34 @@ const ProjectDetail: React.FC = () => {
     const [glossary, setGlossary] = React.useState<DocumentObject>();
     const [styleSheet, setStyleSheet] = React.useState<DocumentObject>();
     const [memory, setMemory] = React.useState<DocumentObject>();
+    const [docs, setDocs] = React.useState<DocumentsBtn[]>([]);
 
+    const { getDocTypeInfo } = useDocResult();
+    useEffect(() => {
+        if(documents.length){
+            const docArray = documents.map((doc) => {
+                const info = getDocTypeInfo(doc.data);
+                if (!info) return null; // si no aplica, descartamos
+                return {
+                    id: doc.id,
+                    name: doc.data.name,
+                    data: doc.data,
+                    typeLabel: info.typeLabel,
+                    icon: info.icon,
+                };
+            });
+        }
+    },[documents])
+
+    const setDocumetsState = (type: DocumentType, doc: DocumentObject) => {
+        const itemDoc = docs.find((doc) => doc.type === type);
+        if(!itemDoc){
+            setDocs([
+                ...docs,
+                {type, doc}
+            ])
+        }
+    }
     useEffect(() => {
         if (currentUser && projectId) {
             getProjectById(projectId).then(response => {
@@ -50,16 +91,16 @@ const ProjectDetail: React.FC = () => {
         }
     }, [currentUser])
 
-    useEffect(() => {
-        if (documents?.length && projectId) {
-            setCertificate(documents.find(doc => doc.data.isCertificate));
-            setBitext(documents.find(doc => doc.data.isCertificate));
-            setGlossary(documents.find(doc => doc.data.isCertificate));
-            setStyleSheet(documents.find(doc => doc.data.isCertificate));
-            setMemory(documents.find(doc => doc.data.isMemory));
-            updateProcessedDocuments();
-        }
-    }, [documents]);
+    // useEffect(() => {
+    //     if (documents?.length && projectId) {
+    //         setCertificate(documents.find(doc => doc.data.isCertificate));
+    //         setBitext(documents.find(doc => doc.data.isCertificate));
+    //         setGlossary(documents.find(doc => doc.data.isCertificate));
+    //         setStyleSheet(documents.find(doc => doc.data.isCertificate));
+    //         setMemory(documents.find(doc => doc.data.isMemory));
+    //         updateProcessedDocuments();
+    //     }
+    // }, [documents]);
 
     useEffect(() => {
         // Get documents sub-collection from firebase by project id
@@ -218,6 +259,7 @@ const ProjectDetail: React.FC = () => {
 
     const uploadTypeService = async (
         files: FileList, type: 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet') => {
+        
 
         setSaving(true, () => console.log("saving"))
         if (projectId && project) {
@@ -232,16 +274,22 @@ const ProjectDetail: React.FC = () => {
                 isClosable: true,
             })
             const [newFile] = newCert
+
             getDoc(newFile).then(dc => {
-                const newDocuments = [{
+                const newDocument = {
                     id: dc.id,
                     data: dc.data() as Document
-                }, ...documents]
+                }
+                const newDocuments = [newDocument, ...documents]
+                setDocumetsState(type, newDocument)
                 setDocuments(newDocuments)
             })
+            
         }
     }
 
+    console.log({docs});
+    
     return (
         <>
             {currentUser && (
@@ -282,42 +330,42 @@ const ProjectDetail: React.FC = () => {
                         <Spacer h={'40px'} />
                         <Flex justifyContent={'space-between'} alignItems={'center'}>
                             <Heading size='md' pl={4} color='blue.400'>Documents</Heading>
-                            <Flex justifyContent={'flex-end'} mb={2} mr={3} gap={2}>
+                            <Wrap spacing={3} justify={'flex-end'} mb={2} mr={3}>
                                 {currentUser?.role === ROLES.Admin || currentUser?.role === ROLES.Translator ? <>
-                                    {(!memory) &&
+                                    {(project?.data.isMemory && !docs.find((doc) => doc.type === DocumentType.Memory)) &&
                                         <InputFileBtn
-                                            uploadFile={uploadMemory}
+                                            uploadFile={(uploadMemory)}
                                             text={"Upload Memory"}
                                             scheme='yellow'
                                             icon={GrArchive} />}
 
-                                    {(project?.data.isCertificate && !certificate) &&
+                                    {(project?.data.isCertificate && !docs.find((doc) => doc.type === DocumentType.Certificate)) &&
                                         <InputFileBtn
                                             uploadFile={uploadFile}
                                             text={"Add Certificate"}
                                             scheme='green'
-                                            icon={GrDocumentZip} />}
+                                            icon={GrArchive} />}
 
-                                    {(project?.data.isBitext && !bitext) &&
+                                    {(project?.data.isBittext && !docs.find((doc) => doc.type === DocumentType.Bittext)) &&
                                         <InputFileBtn
-                                            uploadFile={(files) => uploadTypeService(files, 'Bittext')}
+                                            uploadFile={(files) => uploadTypeService(files, DocumentType.Bittext)}
                                             text={"Add Bittext"}
                                             scheme='purple'
-                                            icon={GrDocumentZip} />}
+                                            icon={GrArchive} />}
 
-                                    {(project?.data.isGlossary && !glossary) &&
+                                    {(project?.data.isGlossary && !docs.find((doc) => doc.type === DocumentType.Glossary)) &&
                                         <InputFileBtn
-                                            uploadFile={(files) => uploadTypeService(files, 'Glossary')}
+                                            uploadFile={(files) => uploadTypeService(files, DocumentType.Glossary)}
                                             text={"Add Glossary"}
                                             scheme='orange'
-                                            icon={GrDocumentZip} />}
+                                            icon={GrArchive} />}
 
-                                    {(project?.data.isStyleSheet && !styleSheet) &&
+                                    {(project?.data.isStyleSheet && !docs.find((doc) => doc.type === DocumentType.StyleSheet)) &&
                                         <InputFileBtn
-                                            uploadFile={(files) => uploadTypeService(files, 'StyleSheet')}
+                                            uploadFile={(files) => uploadTypeService(files, DocumentType.StyleSheet)}
                                             text={"Add StyleSheet"}
-                                            scheme='silver'
-                                            icon={GrDocumentZip} />}
+                                            scheme='cyan'
+                                            icon={GrArchive} />}
                                 </> : null
                                 }
 
@@ -343,7 +391,7 @@ const ProjectDetail: React.FC = () => {
                                 {project?.data?.status === 'Completed' &&
                                     <ChangeStatusSelector setProject={setProject} project={project} button={true} role={currentUser.role} />
                                 }
-                            </Flex>
+                            </Wrap>
                         </Flex>
                         <Box className={saving ? 'blured' : ''} position={'relative'} >
                             <DocumentTable

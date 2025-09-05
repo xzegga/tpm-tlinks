@@ -6,13 +6,13 @@ import { createFileName } from '../utils/helpers';
 import { db, storage } from '../utils/init-firebase';
 
 export const saveDocuments = (documents: Doc[], project: Project, projectRef: DocumentReference<DocumentData>, code: string) => {
-    console.log("ËNTRO AQUI")
+
     const promises: any[] = [];
     // Get month name of current date
     const month = new Date().toLocaleString('default', { month: 'long' });
     const year = new Date().getFullYear();
     const tenant = project.tenant;
-
+    debugger;
     // eslint-disable-next-line array-callback-return
     documents.map(async (doc: Doc) => {
         const path = `/${tenant}/${year}/${month}/${code}/Source/${project.requestNumber}-${code}-${doc.file.name}`;

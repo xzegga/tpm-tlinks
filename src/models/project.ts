@@ -7,7 +7,7 @@ export interface Project {
     isEditing: boolean;
     isTranslation: boolean;
     isCertificate: boolean;
-    isBitext: boolean;
+    isBittext: boolean;
     isGlossary: boolean;
     isMemory: boolean;
     isStyleSheet: boolean;
