@@ -19,7 +19,7 @@ import { ProjectObject } from '../../models/project';
 import { ROLES } from '../../models/users';
 import { exportToExcel } from '../../utils/export';
 import { generateYears } from '../../utils/helpers';
-import { allStatuses, monthNames } from '../../utils/value-objects';
+import { allStatuses, allStatusesWitNoTranslators, monthNames } from '../../utils/value-objects';
 import { useAuth } from '../../context/AuthContext';
 import ChangeStatusSelector from '../../components/ChangeStatus';
 
@@ -54,6 +54,8 @@ const Dashboard: React.FC = () => {
     const [requestdb, setRequestdb] = useState<string>('');
     const [count, setCount] = useState<number>()
     const [isOpen, setIsOpen] = useState(false);
+
+    const statuses = tenant?.translators ? allStatuses : allStatusesWitNoTranslators;
 
     const onClose = () => setIsOpen(false);
 
@@ -300,7 +302,7 @@ const Dashboard: React.FC = () => {
                                         <Flex alignItems={'center'} justifyContent={'start'}>
                                             <FormLabel my={0}>Status</FormLabel>
                                             <Select minW={140} ml={1} name={'status'} id={'status'} value={status} onChange={handleFilter}>
-                                                {allStatuses.map((s: string, index) => (
+                                                {statuses.map((s: string, index) => (
                                                     <option key={index} value={s}>
                                                         {s}
                                                     </option>

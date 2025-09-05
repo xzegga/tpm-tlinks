@@ -1,5 +1,7 @@
 export const statuses = ['Received', 'Assigned', 'In Progress', 'Completed', 'Archived', 'On Hold', 'Quoted', 'Delivered'];
+export const noTranslatorsStatuses = ['Received', 'In Progress', 'Completed', 'Archived', 'On Hold', 'Quoted'];
 export const allStatuses = ['Active', ...statuses];
+export const allStatusesWitNoTranslators = ['Active', ...noTranslatorsStatuses];
 export const monthNames = [
     { name: 'January', value: 0 },
     { name: 'February', value: 1 },

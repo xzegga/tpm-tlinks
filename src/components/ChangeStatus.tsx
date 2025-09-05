@@ -48,7 +48,6 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
                 setIsOpen(true)
             }
         }
-        
     }
 
     const changeStatus = async () => {

@@ -132,7 +132,8 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
           department: claims.department,
         } as LoggedUser
 
-        const current = await getUserById(claims, user);
+        // const current = await getUserById(claims, user);
+        const current = await getUserById(usr.uid, user);
         if (current) {
           setState({
             currentUser: { ...current, token: usr.accessToken }

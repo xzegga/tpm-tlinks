@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../utils/init-firebase';
 import { LoggedUser } from '../store/initialGlobalState';
 import { removeUndefinedProps } from '../utils/removeUndefined';
@@ -16,22 +16,61 @@ export const getAllUsers = async () => {
     return result;
 };
 
-export const getUserById = async (claims: any, user: LoggedUser): Promise<LoggedUser | null> => {
-    try {
-        const userCollection = collection(db, 'users');
-        const querySnapshot = await getDocs(query(userCollection, where('uid', '==', claims.user_id)));
+// export const getUserById = async (claims: any, user: LoggedUser): Promise<LoggedUser | null> => {
+//     try {
+//         const userCollection = collection(db, 'users');
+//         const querySnapshot = await getDocs(query(userCollection, where('uid', '==', claims.user_id)));
 
-        if (!querySnapshot.empty) {
-            return querySnapshot.docs[0].data() as LoggedUser;
+//         if (!querySnapshot.empty) {
+//             return querySnapshot.docs[0].data() as LoggedUser;
+//         }
+
+//         const newUser = {
+//             ...removeUndefinedProps(user),
+//             role: ROLES.Unauthorized
+//         };
+
+//         const docRef = await addDoc(userCollection, newUser);
+//         return { ...newUser, id: docRef.id } as LoggedUser;
+//     } catch (error) {
+//         console.log('Error getting user by ID:', error);
+//         return null;
+//     }
+// };
+
+/**
+ * Obtiene el usuario por su UID o lo crea si no existe.
+ * Devuelve un LoggedUser sin el token; el token se asigna en AuthContext.
+ */
+export const getUserById = async (uid: string, user: LoggedUser): Promise<LoggedUser | null> => {
+    try {
+        const userId = uid ?? user.uid;
+        if (!userId) {
+            console.log('getUserById: missing uid');
+            return null;
         }
 
-        const newUser = {
-            ...removeUndefinedProps(user),
-            role: ROLES.Unauthorized
-        };
+        // Referencia al doc con ID = uid para que siempre sea el mismo
+        const ref = doc(db, 'users', userId);
+        const snap = await getDoc(ref);
 
-        const docRef = await addDoc(userCollection, newUser);
-        return { ...newUser, id: docRef.id } as LoggedUser;
+        // Perfil base con los datos actuales (sin undefined)
+        const base = removeUndefinedProps({
+            uid: userId,
+            tenant: user.tenant ?? null,
+            role: user.role ?? ROLES.Unauthorized,
+            department: user.department ?? null,
+            name: user.name ?? null,
+            photoUrl: user.photoUrl ?? null,
+            email: user.email ?? null
+        });
+
+        // Crea o actualiza el documento de usuario (merge)
+        await setDoc(ref, base, { merge: true });
+
+        // Devuelve el perfil actualizado (sin incluir el token)
+        const data = snap.exists() ? snap.data() ?? base : base;
+        return { ...(data as LoggedUser) };
     } catch (error) {
         console.log('Error getting user by ID:', error);
         return null;
