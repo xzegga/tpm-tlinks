@@ -323,8 +323,7 @@ const Users: React.FC = () => {
                                         <TenantDropdown
                                             value={user.data?.tenant || 'guess'}
                                             disabled={
-                                                (user.data?.role === ROLES.Admin && currentUser?.uid === user.id)
-                                                || !user.data?.role
+                                                !user.data?.role
                                                 || user.data?.role === ROLES.Unauthorized
                                             }
                                             handleChange={(e: any) => handleRole(e, user)}
@@ -337,9 +336,7 @@ const Users: React.FC = () => {
                                             name="department"
                                             value={user.data?.department || 'all'}
                                             onChange={(e) => handleRole(e, user)}
-                                            disabled={
-                                                (user.data?.role === ROLES.Admin && currentUser?.uid === user.id)
-                                                || !user.data?.tenant
+                                            disabled={!user.data?.tenant
                                                 || user.data?.role === ROLES.Unauthorized
                                                 || user.data?.tenant === 'none'
                                             }
