@@ -6,6 +6,7 @@ import { createFileName } from '../utils/helpers';
 import { db, storage } from '../utils/init-firebase';
 
 export const saveDocuments = (documents: Doc[], project: Project, projectRef: DocumentReference<DocumentData>, code: string) => {
+    console.log("ËNTRO AQUI")
     const promises: any[] = [];
     // Get month name of current date
     const month = new Date().toLocaleString('default', { month: 'long' });
@@ -103,6 +104,44 @@ export const saveMemory = async (file: File, project: ProjectObject, projectRef:
                     name: file.metadata.name,
                     path: file.metadata.fullPath,
                     isMemory: true
+                })
+            );
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    return filesUploaded;
+};
+
+export const saveDocumentServices = async (
+    file: File, project: ProjectObject, projectRef: DocumentReference<DocumentData>,
+    type: 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet'
+    ) => {
+    const promises: any[] = [];
+    // Get month name of current date
+    const month = new Date().toLocaleString('default', { month: 'long' });
+    const year = new Date().getFullYear();
+    const code = project.data.projectId;
+    const tenant = project.data.tenant;
+
+    const path = `/${tenant}/${year}/${month}/${code}/${type}/${file.name}`;
+    const storageRef = ref(storage, path);
+
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    promises.push(uploadTask);
+
+    const results = await Promise.all(promises);
+
+    const filesUploaded: any = [];
+    for (const file of results) {
+        try {
+            const documentRef = collection(projectRef, 'documents');
+            filesUploaded.push(
+                await addDoc(documentRef, {
+                    created: Timestamp.now(),
+                    name: file.metadata.name,
+                    path: file.metadata.fullPath,
+                    [`is${type}`]: true
                 })
             );
         } catch (error) {

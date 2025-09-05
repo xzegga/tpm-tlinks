@@ -9,7 +9,7 @@ import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import {
   Box, Breadcrumb, BreadcrumbItem, Button, Checkbox, CircularProgress, Container, Flex,
   FormControl, FormLabel, Heading, Input, InputGroup, Select, Spacer, Stack, Text, Textarea,
-  VStack, Wrap, WrapItem, Spinner
+  VStack, Wrap, WrapItem, Spinner, useToast
 } from '@chakra-ui/react';
 
 import Urgent from '../../assets/isUrgent.svg?react';
@@ -30,6 +30,10 @@ const initialState: Project = {
   isEditing: false,
   isTranslation: true,
   isCertificate: false,
+  isBitext: false,
+  isGlossary: false,
+  isMemory: false,
+  isStyleSheet: false,
   sourceLanguage: 'English',
   targetLanguage: 'Spanish',
   timeLine: Timestamp.fromDate(addDays(new Date(), 5)),
@@ -53,6 +57,7 @@ const AddProject: React.FC = () => {
     tenant: tenant.slug,
     department: currentUser.department
   });
+  const toast = useToast();
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const navigate = useNavigate();
@@ -89,6 +94,18 @@ const AddProject: React.FC = () => {
           tenant: currentUser?.tenant,
           department: project.department ?? currentUser.department,
         }
+      }else{
+        if (project?.tenant === '' || project?.tenant === undefined) {
+          toast({
+              description: `You must select a client`,
+              status: 'error',
+              duration: 3000,
+              isClosable: true,
+          });
+
+          setSaving(false, () => {});
+          return;
+        }
       }
 
       const projectToSave: Project = {
@@ -97,6 +114,8 @@ const AddProject: React.FC = () => {
         ...tenantoptions,
       };
 
+      console.log(tenant);
+      
       await saveProject(projectToSave, files, tenant);
       setSaving(false, () => navigate(`/${currentUser?.role}`));
     }
@@ -178,6 +197,9 @@ const AddProject: React.FC = () => {
                                     size="md"
                                     flex={1}
                                   >
+                                    <option value={''}>
+                                      Select Client
+                                    </option>
                                     {tenants && tenants.length ? <>
                                       {tenants.map((tn) => <option
                                         key={tn.id}
@@ -287,6 +309,19 @@ const AddProject: React.FC = () => {
                                 </Checkbox>
                                 <Checkbox name="isCertificate" id="isCertificate" checked={project.isCertificate} onChange={handleCheckbox}>
                                   Requires certification
+                                </Checkbox>
+                                <Checkbox required name="isBitext" id="isBitext"
+                                  checked={project.isBitext} onChange={handleCheckbox}>
+                                  Bitext
+                                </Checkbox>
+                                <Checkbox name="isGlossary" id="isGlossary" checked={project.isGlossary} onChange={handleCheckbox}>
+                                  Glossary
+                                </Checkbox>
+                                <Checkbox name="isMemory" id="isMemory" checked={project.isMemory} onChange={handleCheckbox}>
+                                  Memory
+                                </Checkbox>
+                                <Checkbox name="isStyleSheet" id="isStyleSheet" checked={project.isStyleSheet} onChange={handleCheckbox}>
+                                  StyleSheet
                                 </Checkbox>
                               </Stack>
 

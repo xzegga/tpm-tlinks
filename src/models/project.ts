@@ -7,6 +7,10 @@ export interface Project {
     isEditing: boolean;
     isTranslation: boolean;
     isCertificate: boolean;
+    isBitext: boolean;
+    isGlossary: boolean;
+    isMemory: boolean;
+    isStyleSheet: boolean;
     sourceLanguage: string;
     targetLanguage: string;
     timeLine: Timestamp;

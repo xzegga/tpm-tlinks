@@ -20,12 +20,14 @@ export const getProjectById = async (projectId: string) => {
 
 export const saveProject = async (project: Project, files: Doc[], tenant: Tenant) => {
     try {
+        console.log({project, files, tenant})
         const code = project.department === 'all' ? tenant.code : project.department || 'all';
         const projectCode = await getCorrelativeID(code, project);
+        
         const projectDoc = collection(db, 'projects');
         const counterProj = doc(db, 'counters', 'projects');
         const counter = await getCounter('projects');
-
+        //console.log("ËNTRO AQUI")
         const timeLine = isValid(project.timeLine.toDate()) ? project.timeLine : Timestamp.fromDate(addDays(new Date(), 5));
         const created = project.created ? project.created : Timestamp.now();
 
@@ -35,6 +37,10 @@ export const saveProject = async (project: Project, files: Doc[], tenant: Tenant
             isEditing: project.isEditing,
             isTranslation: project.isTranslation,
             isCertificate: project.isCertificate,
+            isBitext: project.isBitext,
+            isGlossary: project.isGlossary,
+            isMemory: project.isMemory,
+            isStyleSheet: project.isStyleSheet,
             sourceLanguage: project.sourceLanguage,
             targetLanguage: project.targetLanguage,
             timeLine,
@@ -92,11 +98,13 @@ export const removeTranslatorId = async (projectId: string): Promise<void> => {
 };
 
 export const getCorrelativeID = async (code: string, project?: Project) => {
+    console.log("ËNTRO AQUI")
     const created: Timestamp | undefined = project?.created;
     const createdDate = created?.toDate() || new Date();
     const today = Timestamp.fromDate(new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()));
+    console.log("ËNTRO AQUI")
     const q = query(collection(db, 'projects'), where('created', '>=', today), where('tenant', '==', project?.tenant), where('department', '==', project?.department));
-
+    
     const querySnapshot = await getDocs(q);
 
     // Build project id base on current date and correlative

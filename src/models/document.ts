@@ -8,6 +8,9 @@ export interface Document {
     type: string;
     language?: string;
     isCertificate?: boolean;
+    isBitext?: boolean;
+    isGlossary?: boolean;
+    isStyleSheet?: boolean;
     isMemory: string;
 }
 

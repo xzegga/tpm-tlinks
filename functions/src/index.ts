@@ -65,7 +65,7 @@ export const seedAdminClaim = onCall(async (request) => {
 
         const claims = {
             role: 'admin',
-            tenant: 'ChildrenHospital',
+            tenant: 'TestClient',
             department: 'all'
         };
         // Asignar claims

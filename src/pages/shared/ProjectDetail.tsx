@@ -12,7 +12,7 @@ import DocumentTable from '../../components/tables/DocumentTable';
 import { GrArchive, GrDocumentZip } from 'react-icons/gr';
 import { ProjectObject } from '../../models/project';
 import { Document, DocumentObject, ProcessedDocument } from '../../models/document';
-import { getDocuments, saveCertificate, saveMemory, saveTargetDocuments } from '../../data/Documents';
+import { getDocuments, saveCertificate, saveMemory, saveTargetDocuments, saveDocumentServices } from '../../data/Documents';
 import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import './AddProject.css';
 import InputFileBtn from '../../components/InputFileBtn';
@@ -36,6 +36,9 @@ const ProjectDetail: React.FC = () => {
     const [documents, setDocuments] = React.useState<DocumentObject[]>([]);
     const [processedDocuments, setProcessedDocuments] = React.useState<ProcessedDocument[]>([])
     const [certificate, setCertificate] = React.useState<DocumentObject>();
+    const [bitext, setBitext] = React.useState<DocumentObject>();
+    const [glossary, setGlossary] = React.useState<DocumentObject>();
+    const [styleSheet, setStyleSheet] = React.useState<DocumentObject>();
     const [memory, setMemory] = React.useState<DocumentObject>();
 
     useEffect(() => {
@@ -50,6 +53,9 @@ const ProjectDetail: React.FC = () => {
     useEffect(() => {
         if (documents?.length && projectId) {
             setCertificate(documents.find(doc => doc.data.isCertificate));
+            setBitext(documents.find(doc => doc.data.isCertificate));
+            setGlossary(documents.find(doc => doc.data.isCertificate));
+            setStyleSheet(documents.find(doc => doc.data.isCertificate));
             setMemory(documents.find(doc => doc.data.isMemory));
             updateProcessedDocuments();
         }
@@ -210,6 +216,32 @@ const ProjectDetail: React.FC = () => {
         }
     }
 
+    const uploadTypeService = async (
+        files: FileList, type: 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet') => {
+
+        setSaving(true, () => console.log("saving"))
+        if (projectId && project) {
+            setSaving(true, () => console.log("saving"))
+            const projectRef = doc(collection(db, 'projects'), projectId);
+            const newCert = await saveDocumentServices(files[0], project, projectRef, type)
+            setSaving(false, () => console.log("saving"));
+            toast({
+                description: `${type} uploaded successfully`,
+                status: 'success',
+                duration: 9000,
+                isClosable: true,
+            })
+            const [newFile] = newCert
+            getDoc(newFile).then(dc => {
+                const newDocuments = [{
+                    id: dc.id,
+                    data: dc.data() as Document
+                }, ...documents]
+                setDocuments(newDocuments)
+            })
+        }
+    }
+
     return (
         <>
             {currentUser && (
@@ -264,6 +296,27 @@ const ProjectDetail: React.FC = () => {
                                             uploadFile={uploadFile}
                                             text={"Add Certificate"}
                                             scheme='green'
+                                            icon={GrDocumentZip} />}
+
+                                    {(project?.data.isBitext && !bitext) &&
+                                        <InputFileBtn
+                                            uploadFile={(files) => uploadTypeService(files, 'Bittext')}
+                                            text={"Add Bittext"}
+                                            scheme='purple'
+                                            icon={GrDocumentZip} />}
+
+                                    {(project?.data.isGlossary && !glossary) &&
+                                        <InputFileBtn
+                                            uploadFile={(files) => uploadTypeService(files, 'Glossary')}
+                                            text={"Add Glossary"}
+                                            scheme='orange'
+                                            icon={GrDocumentZip} />}
+
+                                    {(project?.data.isStyleSheet && !styleSheet) &&
+                                        <InputFileBtn
+                                            uploadFile={(files) => uploadTypeService(files, 'StyleSheet')}
+                                            text={"Add StyleSheet"}
+                                            scheme='silver'
                                             icon={GrDocumentZip} />}
                                 </> : null
                                 }
