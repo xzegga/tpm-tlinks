@@ -34,7 +34,7 @@ export const DocumentType = {
 } as const;
 
 type DocumentType = 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet'
-type DocumentsBtn = {
+type DocumentsWithType = {
     type: DocumentType,
     doc: DocumentObject
 }
@@ -54,31 +54,32 @@ const ProjectDetail: React.FC = () => {
     const [glossary, setGlossary] = React.useState<DocumentObject>();
     const [styleSheet, setStyleSheet] = React.useState<DocumentObject>();
     const [memory, setMemory] = React.useState<DocumentObject>();
-    const [docs, setDocs] = React.useState<DocumentsBtn[]>([]);
+    const [docs, setDocs] = React.useState<DocumentsWithType[]>([]);
 
     const { getDocTypeInfo } = useDocResult();
     useEffect(() => {
-        if(documents.length){
-            const docArray = documents.map((doc) => {
+        console.log(documents)
+        if (documents.length) {
+
+            const docArray: DocumentsWithType[] = documents.map((doc) => {
                 const info = getDocTypeInfo(doc.data);
-                if (!info) return null; // si no aplica, descartamos
+                if (!info) return null;
                 return {
-                    id: doc.id,
-                    name: doc.data.name,
-                    data: doc.data,
-                    typeLabel: info.typeLabel,
-                    icon: info.icon,
-                };
-            });
+                    type: info.typeLabel,
+                    doc: doc,
+                } as DocumentsWithType;
+            }).filter((item) => item !== null);
+
+            setDocs(docArray);
         }
-    },[documents])
+    }, [documents])
 
     const setDocumetsState = (type: DocumentType, doc: DocumentObject) => {
         const itemDoc = docs.find((doc) => doc.type === type);
-        if(!itemDoc){
+        if (!itemDoc) {
             setDocs([
                 ...docs,
-                {type, doc}
+                { type, doc }
             ])
         }
     }
@@ -259,7 +260,7 @@ const ProjectDetail: React.FC = () => {
 
     const uploadTypeService = async (
         files: FileList, type: 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet') => {
-        
+
 
         setSaving(true, () => console.log("saving"))
         if (projectId && project) {
@@ -284,12 +285,12 @@ const ProjectDetail: React.FC = () => {
                 setDocumetsState(type, newDocument)
                 setDocuments(newDocuments)
             })
-            
+
         }
     }
 
-    console.log({docs});
-    
+    console.log({ docs });
+
     return (
         <>
             {currentUser && (
