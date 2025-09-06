@@ -8,7 +8,6 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     const location = useLocation();
     const { currentUser } = useStore()
-    console.log(currentUser)
     return currentUser && allowedRoles?.includes(currentUser.role)
         ? <Outlet />
         : currentUser?.uid

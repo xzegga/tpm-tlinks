@@ -6,7 +6,6 @@ import { createFileName } from '../utils/helpers';
 import { db, storage } from '../utils/init-firebase';
 
 export const saveDocuments = (documents: Doc[], project: Project, projectRef: DocumentReference<DocumentData>, code: string) => {
-
     const promises: any[] = [];
     // Get month name of current date
     const month = new Date().toLocaleString('default', { month: 'long' });
@@ -113,10 +112,7 @@ export const saveMemory = async (file: File, project: ProjectObject, projectRef:
     return filesUploaded;
 };
 
-export const saveDocumentServices = async (
-    file: File, project: ProjectObject, projectRef: DocumentReference<DocumentData>,
-    type: 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet'
-    ) => {
+export const saveDocumentServices = async (file: File, project: ProjectObject, projectRef: DocumentReference<DocumentData>, type: 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet') => {
     const promises: any[] = [];
     // Get month name of current date
     const month = new Date().toLocaleString('default', { month: 'long' });
@@ -206,7 +202,7 @@ export const deleteDocument = async (projectId: string, documentId: string, docu
     const targetDocumentsRef = doc(collection(documentRef, 'documents'), document.id);
 
     await deleteDoc(targetDocumentsRef);
-    if (document.data.isCertificate || document.data.isMemory) {
+    if (document.data.isCertificate || document.data.isMemory || document.data.isBittext || document.data.isGlossary || document.data.isStyleSheet) {
         await deleteDoc(documentRef);
     }
 };
