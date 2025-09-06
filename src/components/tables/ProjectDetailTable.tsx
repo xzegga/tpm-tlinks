@@ -33,6 +33,16 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
         dbHandleWordCountChange
     } = useProjectExtras(project);
 
+    const badgeMap: Record<string, { label: string; color: string }> = {
+        isTranslation: { label: "Translation", color: "gray" },
+        isEditing: { label: "Edition", color: "purple" },
+        isCertificate: { label: "Certification", color: "blue" },
+        isBittext: { label: "Bittext", color: "green" },
+        isGlossary: { label: "Glossary", color: "red" },
+        isStyleSheet: { label: "StyleSheet", color: "orange" },
+        isMemory: { label: "Memory", color: "yellow" },
+    };
+
     return (
         <Center>
             <Table variant='simple' size='sm' mt='5'>
@@ -49,9 +59,22 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                     <Tr>
                         <Td maxW='35%' w={'35%'}><Text fontWeight={'bold'}>Service Requested: </Text></Td>
                         <Td>
-                            {project.data.isTranslation && <Badge mr={3} px={2} colorScheme='gray'>Translation</Badge>}
+                            {Object.entries(project.data).map(([key, value]) =>
+                                value && badgeMap[key] ? (
+                                <Badge
+                                    key={key}
+                                    mr={3}
+                                    mt={2}
+                                    px={2}
+                                    colorScheme={badgeMap[key].color}
+                                >
+                                    {badgeMap[key].label}
+                                </Badge>
+                                ) : null
+                            )}
+                            {/* {project.data.isTranslation && <Badge mr={3} px={2} colorScheme='gray'>Translation</Badge>}
                             {project.data.isEditing && <Badge mr={3} colorScheme='purple' px={2}>Edition</Badge>}
-                            {project.data.isCertificate && <Badge colorScheme='blue' px={2}>Certification</Badge>}
+                            {project.data.isCertificate && <Badge colorScheme='blue' px={2}>Certification</Badge>} */}
                         </Td>
                     </Tr>
                     <Tr>
