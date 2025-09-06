@@ -46,6 +46,16 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
         dbHandleWordCountChange
     } = useProjectExtras(project);
 
+    const badgeConfig = [
+        { key: 'isTranslation', label: 'T', color: 'gray' },
+        { key: 'isEditing', label: 'E', color: 'purple' },
+        { key: 'isCertificate', label: 'C', color: 'blue' },
+        { key: 'isBittext', label: 'B', color: 'green' },
+        { key: 'isGlossary', label: 'G', color: 'red' },
+        { key: 'isStyleSheet', label: 'S', color: 'orange' },
+        { key: 'isMemory', label: 'M', color: 'yellow' },
+    ];
+
     const convertTimeStamp = (time: any) => {
         const timeStamp = new Timestamp(time._seconds, time._nanoseconds);
         return transfromTimestamp(timeStamp)
@@ -170,23 +180,15 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                 cursor={'pointer'}
                 _hover={{ bg: 'gray.100' }}
             >
-                <Flex alignItems={'center'}>
-                    {project?.data?.isTranslation && (
-                        <Badge mr={3} px={2} colorScheme="gray">
-                            T
+            <Flex alignItems={'center'}>
+                {badgeConfig.map(({ key, label, color }) =>
+                    (project?.data as Record<string, any>)[key] ? (
+                        <Badge key={key} mr={2} colorScheme={color} px={2}>
+                            {label}
                         </Badge>
-                    )}
-                    {project?.data?.isEditing && (
-                        <Badge mr={3} colorScheme="purple" px={2}>
-                            E
-                        </Badge>
-                    )}
-                    {project?.data?.isCertificate && (
-                        <Badge colorScheme="blue" px={2}>
-                            C
-                        </Badge>
-                    )}
-                </Flex>
+                    ) : null
+                )}
+            </Flex>
             </LinkBox>
             <LinkBox
                 as={Td}
