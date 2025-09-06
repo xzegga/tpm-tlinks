@@ -158,68 +158,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
         <Box p={3} fontSize={'14px'}>
 
             <Box pb={2} mb={3} pl={1} borderBottom={'1px'} borderColor={'gray.300'} color={'gray.500'}>File List</Box>
-            {/* {certificate && <Box>
-                <Flex justifyContent={'space-between'}
-                    alignItems={'center'} mb={2} mt={2} pb={3}
-                    style={{ borderBottom: '1px solid #cdcdcd' }} >
-                    <Flex pl={2}>
-                        <Flex alignItems={'center'}>
-                            <Box width={7} mr={3} color={'green'}>
-                                <AiOutlineSafetyCertificate fontSize={28} color={'green'} />
-                            </Box>
-                            <Text fontWeight={'bold'} fontSize={16} mr={2}>Certificate: </Text>
-                            <Text>{certificate.data.name}</Text>
-                        </Flex>
-                    </Flex>
-                    <Flex pr={5} alignItems={'center'}>
-
-                        <Link color='blue.400' onClick={() => downloadFile(certificate.data.path, certificate.data.name)}>
-                            <Flex justifyContent={'end'} alignItems={'center'}>
-                                <AiOutlineDownload />
-                                <Text ml={2}>Download</Text>
-                            </Flex>
-                        </Link>
-
-                        {(currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator ) &&
-                            <>
-                                <Divider orientation={'vertical'} mx={3} h={'15px'} w={'1px'} />
-                                <DeleteIcon onClick={() => removeFile(certificate.id, certificate)} cursor={'pointer'} color={'red.400'} />
-                            </>}
-                    </Flex>
-                </Flex>
-            </Box>} */}
-
-
-            {/* {memory && <Box>
-                <Flex justifyContent={'space-between'}
-                    alignItems={'center'} mb={2} mt={2} pb={3}
-                    style={{ borderBottom: '1px solid #cdcdcd' }} >
-                    <Flex pl={2}>
-                        <Flex alignItems={'center'}>
-                            <Box width={7} mr={3} color={'green'}>
-                                <Image src={TradosLogo} maxH="35px" margin={'0 auto'}/>
-                            </Box>
-                            <Text fontWeight={'bold'} fontSize={16} mr={2}>Memory: </Text>
-                            <Text>{memory.data.name}</Text>
-                        </Flex>
-                    </Flex>
-                    <Flex pr={5} alignItems={'center'}>
-
-                        <Link color='blue.400' onClick={() => downloadFile(memory.data.path, memory.data.name)}>
-                            <Flex justifyContent={'end'} alignItems={'center'}>
-                                <AiOutlineDownload />
-                                <Text ml={2}>Download</Text>
-                            </Flex>
-                        </Link>
-
-                        {(currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator ) &&
-                            <>
-                                <Divider orientation={'vertical'} mx={3} h={'15px'} w={'1px'} />
-                                <DeleteIcon onClick={() => removeFile(memory.id, memory)} cursor={'pointer'} color={'red.400'} />
-                            </>}
-                    </Flex>
-                </Flex>
-            </Box>} */}
 
             {result.map((doc) => (
                 <Box key={doc.id}>
