@@ -12,24 +12,27 @@ import { getProjectById, updateStatus } from '../data/Projects';
 import { ProjectObject } from '../models/project';
 import { ROLES } from '../models/users';
 import { db } from '../utils/init-firebase';
-import { adminStatuses, STATUS, translatorStatuses } from '../utils/value-objects';
+import { adminStatuses, allStatusesWitNoTranslators, STATUS, translatorStatuses } from '../utils/value-objects';
 import { useAuth } from '../context/AuthContext';
 import { FaArchive } from 'react-icons/fa';
+import { Tenant } from '../models/clients';
 
 
-export default function ChangeStatusSelector({ project, onSuccess, ids, setProject, button = false, role }: {
+export default function ChangeStatusSelector({ project, onSuccess, ids, setProject, button = false, role, tenant }: {
     project?: ProjectObject,
     ids?: string[],
     setProject?: Dispatch<React.SetStateAction<ProjectObject | undefined>>,
     onSuccess?: (status: string) => void,
     role: string;
     button?: boolean;
+    tenant?: Tenant;
 }) {
     const [isOpen, setIsOpen] = useState(false)
     const { validate } = useAuth();
     const onClose = () => setIsOpen(false)
     const cancelRef = useRef(null)
     const statusAvailable = role === ROLES.Admin ? adminStatuses : translatorStatuses;
+    const statuses = tenant?.translators ? adminStatuses : allStatusesWitNoTranslators;
     const [status, setStatus] = useState<string>(ids?.length ? statusAvailable[0] : project?.data?.status || '')
     const toast = useToast()
 
@@ -97,7 +100,7 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
             >
                 {ids && <option value="none">Select Status</option>}
                 {
-                    statusAvailable.map(status => (
+                    statuses.map(status => (
                         <option key={status} value={status}>{status}</option>
                     ))
                 }

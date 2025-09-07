@@ -24,6 +24,7 @@ import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
 import ChangeStatusSelector from '../../components/ChangeStatus';
 import { useDocResult } from '../../hooks/useDocResult';
+import { allStatuses, allStatusesWitNoTranslators } from '../../utils/value-objects';
 
 export const DocumentType = {
     Certificate: 'Certificate',
@@ -41,7 +42,7 @@ type DocumentsWithType = {
 
 const ProjectDetail: React.FC = () => {
     const { projectId } = useParams();
-    const { currentUser } = useStore();
+    const { currentUser, tenant } = useStore();
     const toast = useToast()
 
 
@@ -289,7 +290,7 @@ const ProjectDetail: React.FC = () => {
         }
     }
 
-    console.log({ docs });
+    console.log(project?.data);
 
     return (
         <>
@@ -320,7 +321,7 @@ const ProjectDetail: React.FC = () => {
                                 </Flex>
 
                                 {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && (
-                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role} />
+                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role} tenant={tenant} />
                                 )}
                                 {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>
