@@ -1,6 +1,6 @@
-import {DecodedIdToken, getAuth} from "firebase-admin/auth";
-import {HttpsError} from "firebase-functions/v2/https";
-import {ROLES} from "../endpoints/tenants";
+import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
+import { HttpsError } from 'firebase-functions/v2/https';
+import { ROLES } from '../endpoints/tenants';
 
 /**
  * Validate user token sent
@@ -13,11 +13,11 @@ export default async function validateToken(token: string) {
   const validToken: DecodedIdToken = await auth.verifyIdToken(token);
 
   if (!validToken) {
-    return new HttpsError("internal", "Error getting projects");
+    return new HttpsError('internal', 'Error getting projects');
   }
 
   if (validToken.role !== ROLES.Admin) {
-    return new HttpsError("internal", "Permissions denied");
+    return new HttpsError('internal', 'Permissions denied');
   }
 
   return validToken;

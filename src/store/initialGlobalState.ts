@@ -1,28 +1,28 @@
-import { User } from "../context/AuthContext";
-import { Tenant } from "../models/clients";
-import { ROLES } from "../models/users";
+import { User } from '../context/AuthContext';
+import { Tenant } from '../models/clients';
+import { ROLES } from '../models/users';
 
 export const localStorageKeys = [];
 export const sessionStorageKeys = [];
 
-type Role = typeof ROLES[keyof typeof ROLES];
+type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export type LoggedUser = {
-  uid: string,
-  tenant: string,
-  role: Role,
-  department: string,
-  name: string,
-  photoUrl: string,
-  email: string,
-  token: string,
+  uid: string;
+  tenant: string;
+  role: Role;
+  department: string;
+  name: string;
+  photoUrl: string;
+  email: string;
+  token: string;
 } & User;
 
 export type Translators = {
-  uid: string,
-  name: string,
-  projectId: string,
-}
+  uid: string;
+  name: string;
+  projectId: string;
+};
 
 export const initialGlobalState = {
   title: 'Lets start',

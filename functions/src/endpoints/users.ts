@@ -1,7 +1,7 @@
-import {CallableRequest, HttpsError} from "firebase-functions/v2/https";
-import validateToken from "../utils/validateUser";
-import {logger} from "firebase-functions/v2";
-import {getAuth} from "firebase-admin/auth";
+import { CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import validateToken from '../utils/validateUser';
+import { logger } from 'firebase-functions/v2';
+import { getAuth } from 'firebase-admin/auth';
 
 /**
  * Save user to firebase auth
@@ -14,10 +14,10 @@ import {getAuth} from "firebase-admin/auth";
  */
 export async function saveUserData(
   db: FirebaseFirestore.Firestore,
-  request: CallableRequest<any>
+  request: CallableRequest<any>,
 ): Promise<any> {
-  const {token, user} = request.data as any;
-  const {email, role, password, tenant, department} = user;
+  const { token, user } = request.data as any;
+  const { email, role, password, tenant, department } = user;
 
   await validateToken(token);
 
@@ -55,8 +55,8 @@ export async function saveUserData(
       },
     };
   } catch (error: any) {
-    logger.error("Error saving user or assigning claims:", error);
-    return new HttpsError("internal", "Save user fails, please try again");
+    logger.error('Error saving user or assigning claims:', error);
+    return new HttpsError('internal', 'Save user fails, please try again');
   }
 }
 
@@ -72,22 +72,21 @@ export async function saveUserData(
 async function saveUserToDb(
   db: FirebaseFirestore.Firestore,
   user: {
-        uid: string;
-        email: any;
-        role: any;
-        tenant: any;
-        department: any;
-    }
+    uid: string;
+    email: any;
+    role: any;
+    tenant: any;
+    department: any;
+  },
 ): Promise<any> {
   try {
-    await db.collection("users").doc(user.uid).set(user);
-    logger.info("User data saved successfully:", user);
+    await db.collection('users').doc(user.uid).set(user);
+    logger.info('User data saved successfully:', user);
   } catch (error) {
-    logger.error("Error saving user data:", error);
-    return new HttpsError("internal", "Error saving user data");
+    logger.error('Error saving user data:', error);
+    return new HttpsError('internal', 'Error saving user data');
   }
 }
-
 
 /**
  * Remove user to firebase auth
@@ -100,18 +99,18 @@ async function saveUserToDb(
  */
 export async function removeUserData(
   db: FirebaseFirestore.Firestore,
-  request: CallableRequest<any>
+  request: CallableRequest<any>,
 ): Promise<any> {
-  const {token, uid, id} = request.data as any;
+  const { token, uid, id } = request.data as any;
 
   await validateToken(token);
 
   try {
-    await db.collection("users").doc(id).delete();
+    await db.collection('users').doc(id).delete();
     const response = await getAuth().deleteUser(uid);
     return response;
   } catch (error: any) {
-    logger.error("Error removing selected user:", error);
-    return new HttpsError("internal", "User deletion fails, please try again");
+    logger.error('Error removing selected user:', error);
+    return new HttpsError('internal', 'User deletion fails, please try again');
   }
 }

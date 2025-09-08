@@ -1,11 +1,11 @@
-import {logger} from "firebase-functions/v2";
-import {CallableRequest, HttpsError} from "firebase-functions/v2/https";
-import validateToken from "../utils/validateUser";
+import { logger } from 'firebase-functions/v2';
+import { CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import validateToken from '../utils/validateUser';
 
 export const ROLES = {
-  Admin: "admin",
-  Client: "client",
-  Unauthorized: "unauthorized",
+  Admin: 'admin',
+  Client: 'client',
+  Unauthorized: 'unauthorized',
 } as const;
 
 /**
@@ -19,13 +19,13 @@ export const ROLES = {
  */
 export default async function getTenantsData(
   db: FirebaseFirestore.Firestore,
-  request: CallableRequest<any>
+  request: CallableRequest<any>,
 ) {
-  const {token} = request.data as any;
+  const { token } = request.data as any;
   await validateToken(token);
 
   try {
-    const tenantRef = db.collection("tenants");
+    const tenantRef = db.collection('tenants');
     const snapshot = await tenantRef.get();
 
     const tenants = snapshot.docs.map((doc) => ({
@@ -35,7 +35,7 @@ export default async function getTenantsData(
 
     return tenants;
   } catch (error) {
-    logger.error("Error retrieving tenants from database", error);
-    throw new HttpsError("internal", "Error retrieving tenants");
+    logger.error('Error retrieving tenants from database', error);
+    throw new HttpsError('internal', 'Error retrieving tenants');
   }
 }

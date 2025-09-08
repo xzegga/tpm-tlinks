@@ -7,7 +7,7 @@ import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { format, isValid, addDays } from 'date-fns'
 
 interface DatePickerProps {
-    handleDate: Function;
+    handleDate: any;
     restrictDate?: boolean;
 }
 
@@ -71,7 +71,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ handleDate, restrictDate = fals
                             />
                         </Box>
                     </PopoverTrigger>
-                    
+
                     <Portal>
                         <PopoverContent
                             p={0}
@@ -87,19 +87,19 @@ const DatePicker: React.FC<DatePickerProps> = ({ handleDate, restrictDate = fals
                                 onSelectDate={handleSelectDate}
                                 singleDateSelection
                                 disablePastDates={restrictDate}
-                                >
+                            >
                                 <PopoverBody p={0}>
                                     <CalendarControls>
-                                    <CalendarPrevButton />
-                                    <CalendarNextButton />
+                                        <CalendarPrevButton />
+                                        <CalendarNextButton />
                                     </CalendarControls>
 
                                     <CalendarMonths>
-                                    <CalendarMonth>
-                                        <CalendarMonthName />
-                                        <CalendarWeek />
-                                        <CalendarDays />
-                                    </CalendarMonth>
+                                        <CalendarMonth>
+                                            <CalendarMonthName />
+                                            <CalendarWeek />
+                                            <CalendarDays />
+                                        </CalendarMonth>
                                     </CalendarMonths>
                                 </PopoverBody>
                             </Calendar>

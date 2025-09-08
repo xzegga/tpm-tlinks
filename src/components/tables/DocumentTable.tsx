@@ -1,4 +1,4 @@
-import { Image, Flex, Box, Text, Link, Divider, AlertDialog, useToast, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Button, Tooltip } from '@chakra-ui/react';
+import { Flex, Box, Text, Link, Divider, AlertDialog, useToast, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Button, Tooltip } from '@chakra-ui/react';
 import React from 'react';
 import { defaultStyles, FileIcon } from 'react-file-icon';
 import Flag from '../Flag';
@@ -48,8 +48,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
     const onClose = () => setIsDeleting(false)
     const cancelRef = React.useRef(null)
     const toast = useToast()
-    const certificate = documents.find(doc => doc.data.isCertificate)
-    const memory = documents.find(doc => doc.data.isMemory)
 
     // get file extension 
     const getFileExtension = (fileName: string) => {

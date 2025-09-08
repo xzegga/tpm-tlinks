@@ -12,8 +12,6 @@ import { useStore } from '../hooks/useGlobalStore';
 import Logo from '../assets/logo.png';
 import usePreviousRoute from '../hooks/usePreviousRoute';
 
-import { getFunctions, httpsCallable } from 'firebase/functions';
-
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast()

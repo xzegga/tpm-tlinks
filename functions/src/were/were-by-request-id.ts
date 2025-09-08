@@ -1,12 +1,12 @@
-import {Filter} from "../types/types";
+import { Filter } from '../types/types';
 
 const getWhereByRequestId = async (
   requestdb: number | string,
-  whereClause: Filter[]
+  whereClause: Filter[],
 ): Promise<Filter[]> => {
   whereClause.push({
-    field: "requestNumber",
-    operator: "==",
+    field: 'requestNumber',
+    operator: '==',
     value: requestdb,
   });
 

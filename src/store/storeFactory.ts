@@ -1,4 +1,3 @@
-/* eslint-disable no-shadow */
 import { create } from 'zustand';
 
 import { devtools } from 'zustand/middleware';
@@ -23,9 +22,9 @@ export function createStore<Store>(initialState: Store) {
         setLocalStore(newState);
         set((st) => {
           // console.log({newState});
-          return { ...st, ...newState }
+          return { ...st, ...newState };
         });
       },
-    }))
+    })),
   );
 }

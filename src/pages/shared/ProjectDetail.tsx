@@ -12,19 +12,17 @@ import DocumentTable from '../../components/tables/DocumentTable';
 import { GrArchive, GrDocumentZip } from 'react-icons/gr';
 import { ProjectObject } from '../../models/project';
 import { Document, DocumentObject, ProcessedDocument } from '../../models/document';
-import { getDocuments, saveCertificate, saveMemory, saveTargetDocuments, saveDocumentServices } from '../../data/Documents';
+import { saveCertificate, saveMemory, saveTargetDocuments, saveDocumentServices } from '../../data/Documents';
 import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import './AddProject.css';
 import InputFileBtn from '../../components/InputFileBtn';
 import { getProjectById } from '../../data/Projects';
 import Urgent from '../../assets/isUrgent.svg?react';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import JSZip from 'jszip';
 import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
 import ChangeStatusSelector from '../../components/ChangeStatus';
 import { useDocResult } from '../../hooks/useDocResult';
-import { allStatuses, allStatusesWitNoTranslators } from '../../utils/value-objects';
 
 export const DocumentType = {
     Certificate: 'Certificate',
@@ -50,11 +48,6 @@ const ProjectDetail: React.FC = () => {
     const [project, setProject] = React.useState<ProjectObject>();
     const [documents, setDocuments] = React.useState<DocumentObject[]>([]);
     const [processedDocuments, setProcessedDocuments] = React.useState<ProcessedDocument[]>([])
-    const [certificate, setCertificate] = React.useState<DocumentObject>();
-    const [bitext, setBitext] = React.useState<DocumentObject>();
-    const [glossary, setGlossary] = React.useState<DocumentObject>();
-    const [styleSheet, setStyleSheet] = React.useState<DocumentObject>();
-    const [memory, setMemory] = React.useState<DocumentObject>();
     const [docs, setDocs] = React.useState<DocumentsWithType[]>([]);
 
     const { getDocTypeInfo } = useDocResult();
@@ -92,17 +85,6 @@ const ProjectDetail: React.FC = () => {
 
         }
     }, [currentUser])
-
-    // useEffect(() => {
-    //     if (documents?.length && projectId) {
-    //         setCertificate(documents.find(doc => doc.data.isCertificate));
-    //         setBitext(documents.find(doc => doc.data.isCertificate));
-    //         setGlossary(documents.find(doc => doc.data.isCertificate));
-    //         setStyleSheet(documents.find(doc => doc.data.isCertificate));
-    //         setMemory(documents.find(doc => doc.data.isMemory));
-    //         updateProcessedDocuments();
-    //     }
-    // }, [documents]);
 
     useEffect(() => {
         // Get documents sub-collection from firebase by project id
@@ -158,7 +140,6 @@ const ProjectDetail: React.FC = () => {
     }
 
     const downloadSourceZippedFiles = async () => {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const jszip = new JSZip();
         for (const file of documents) {
             const docRef = await ref(storage, file.data.path);
@@ -169,14 +150,6 @@ const ProjectDetail: React.FC = () => {
             fileDownload(content, `${project?.data.projectId}.zip`);
         });
 
-    }
-
-    const updateProcessedDocuments = () => {
-        if (projectId) {
-            getDocuments(projectId, documents).then(proccesedDocs => {
-                if (proccesedDocs) setProcessedDocuments(proccesedDocs)
-            });
-        }
     }
 
     const uploadFile = async (

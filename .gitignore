@@ -14,6 +14,10 @@ build/*
 dist-ssr
 *.local
 
+# Cloud Functions build output
+lib
+functions/lib
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

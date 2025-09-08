@@ -1,18 +1,18 @@
-import {translatorStatuses} from "../types/statuses";
-import {Filter} from "../types/types";
+import { translatorStatuses } from '../types/statuses';
+import { Filter } from '../types/types';
 
 const getWereTranslatorId = async (
   uid: string,
-  whereClause: Filter[]
+  whereClause: Filter[],
 ): Promise<Filter[]> => {
   whereClause.push({
-    field: "translatorId",
-    operator: "==",
+    field: 'translatorId',
+    operator: '==',
     value: uid,
   });
   whereClause.push({
-    field: "status",
-    operator: "in",
+    field: 'status',
+    operator: 'in',
     value: translatorStatuses,
   });
   return whereClause;
