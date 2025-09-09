@@ -12,7 +12,7 @@ import DocumentTable from '../../components/tables/DocumentTable';
 import { GrArchive, GrDocumentZip } from 'react-icons/gr';
 import { ProjectObject } from '../../models/project';
 import { Document, DocumentObject, ProcessedDocument } from '../../models/document';
-import { saveCertificate, saveMemory, saveTargetDocuments, saveDocumentServices } from '../../data/Documents';
+import { saveCertificate, saveMemory, saveTargetDocuments, saveDocumentServices, getDocuments } from '../../data/Documents';
 import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import './AddProject.css';
 import InputFileBtn from '../../components/InputFileBtn';
@@ -52,7 +52,6 @@ const ProjectDetail: React.FC = () => {
 
     const { getDocTypeInfo } = useDocResult();
     useEffect(() => {
-        console.log(documents)
         if (documents.length) {
 
             const docArray: DocumentsWithType[] = documents.map((doc) => {
@@ -65,8 +64,17 @@ const ProjectDetail: React.FC = () => {
             }).filter((item) => item !== null);
 
             setDocs(docArray);
+            updateProcessedDocuments();
         }
     }, [documents])
+
+    const updateProcessedDocuments = () => {
+        if (projectId) {
+            getDocuments(projectId, documents).then(proccesedDocs => {
+                if (proccesedDocs) setProcessedDocuments(proccesedDocs)
+            });
+        }
+    }
 
     const setDocumetsState = (type: DocumentType, doc: DocumentObject) => {
         const itemDoc = docs.find((doc) => doc.type === type);
