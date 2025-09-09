@@ -12,7 +12,7 @@ import { getProjectById, updateStatus } from '../data/Projects';
 import { ProjectObject } from '../models/project';
 import { ROLES } from '../models/users';
 import { db } from '../utils/init-firebase';
-import { adminStatuses, allStatusesWitNoTranslators, STATUS, translatorStatuses } from '../utils/value-objects';
+import { adminStatuses, adminStatusesWithNoTranslators, STATUS, translatorStatuses } from '../utils/value-objects';
 import { useAuth } from '../context/AuthContext';
 import { FaArchive } from 'react-icons/fa';
 import { Tenant } from '../models/clients';
@@ -31,8 +31,12 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
     const { validate } = useAuth();
     const onClose = () => setIsOpen(false)
     const cancelRef = useRef(null)
-    const statusAvailable = role === ROLES.Admin ? adminStatuses : translatorStatuses;
-    const statuses = tenant?.translators ? adminStatuses : allStatusesWitNoTranslators;
+    const statusAvailable =
+        role === ROLES.Admin
+            ? tenant?.translators
+                ? adminStatuses
+                : adminStatusesWithNoTranslators
+            : translatorStatuses;
     const [status, setStatus] = useState<string>(ids?.length ? statusAvailable[0] : project?.data?.status || '')
     const toast = useToast()
 
@@ -100,7 +104,7 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
             >
                 {ids && <option value="none">Select Status</option>}
                 {
-                    statuses.map(status => (
+                    statusAvailable.map(status => (
                         <option key={status} value={status}>{status}</option>
                     ))
                 }

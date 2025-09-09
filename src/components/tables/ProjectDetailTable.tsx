@@ -61,15 +61,15 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                         <Td>
                             {Object.entries(project.data).map(([key, value]) =>
                                 value && badgeMap[key] ? (
-                                <Badge
-                                    key={key}
-                                    mr={3}
-                                    mt={2}
-                                    px={2}
-                                    colorScheme={badgeMap[key].color}
-                                >
-                                    {badgeMap[key].label}
-                                </Badge>
+                                    <Badge
+                                        key={key}
+                                        mr={3}
+                                        mt={2}
+                                        px={2}
+                                        colorScheme={badgeMap[key].color}
+                                    >
+                                        {badgeMap[key].label}
+                                    </Badge>
                                 ) : null
                             )}
                             {/* {project.data.isTranslation && <Badge mr={3} px={2} colorScheme='gray'>Translation</Badge>}
@@ -187,8 +187,9 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
 
                     <Tr>
                         <Td borderWidth={0}
-                            colSpan={currentUser?.role !== ROLES.Admin ? 2 : 1}
-                        ><Text py={2} fontWeight={'bold'}>Translator Comments:</Text>
+                            colSpan={2}
+                        >
+                            <Text py={2} fontWeight={'bold'} w="100%">Translator Comments: {currentUser?.role}</Text>
                             {currentUser?.role !== ROLES.Admin && project?.data?.comments ?
                                 <Box background={'yellow.100'} color={'yellow.900'} w={'100%'} p={3} borderRadius={3}>
                                     <Text >{project?.data?.comments}</Text>

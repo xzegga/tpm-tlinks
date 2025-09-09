@@ -70,3 +70,12 @@ export const adminStatuses = [
   STATUS.Quoted,
   STATUS.Delivered,
 ];
+
+export const adminStatusesWithNoTranslators = [
+  STATUS.Received,
+  STATUS.InProgress,
+  STATUS.Completed,
+  STATUS.Archived,
+  STATUS.OnHold,
+  STATUS.Quoted,
+];

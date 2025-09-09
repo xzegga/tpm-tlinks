@@ -271,7 +271,7 @@ const Dashboard: React.FC = () => {
                                             <FormLabel my={0}>Year</FormLabel>
                                             <Select
                                                 w={90}
-                                                ml={1}
+                                                mx={'2px'}
                                                 name={'yearSelected'}
                                                 id={'yearSelected'}
                                                 value={yearSelected}
@@ -288,7 +288,7 @@ const Dashboard: React.FC = () => {
                                     <FormControl id="month_selection" ml={3}>
                                         <Flex alignItems={'center'} justifyContent={'start'}>
                                             <FormLabel my={0}>Month</FormLabel>
-                                            <Select minW={140} ml={1} name={'monthSelected'} id={'monthSelected'} value={monthSelected} onChange={handleFilterDate}>
+                                            <Select minW={140} mx={'2px'} name={'monthSelected'} id={'monthSelected'} value={monthSelected} onChange={handleFilterDate}>
                                                 {/* <option value={-1}>All</option> */}
                                                 {monthNames.map((s, index) => (
                                                     <option key={index} value={s.value}>
@@ -301,7 +301,7 @@ const Dashboard: React.FC = () => {
                                     <FormControl id="language_requested" ml={3}>
                                         <Flex alignItems={'center'} justifyContent={'start'}>
                                             <FormLabel my={0}>Status</FormLabel>
-                                            <Select minW={140} ml={1} name={'status'} id={'status'} value={status} onChange={handleFilter}>
+                                            <Select minW={140} mx={'2px'} name={'status'} id={'status'} value={status} onChange={handleFilter}>
                                                 {statuses.map((s: string, index) => (
                                                     <option key={index} value={s}>
                                                         {s}
@@ -318,7 +318,7 @@ const Dashboard: React.FC = () => {
                                     <FormControl id="page_size" ml={3}>
                                         <Flex alignItems={'center'} justifyContent={'start'}>
                                             <FormLabel my={0}>Page</FormLabel>
-                                            <Select w={'70px'} ml={1} name={'page'} id={'page'}
+                                            <Select w={'70px'} mx={'1px'} name={'page'} id={'page'}
                                                 value={pagination} onChange={(e) => setState({ pagination: e.target.value })}>
                                                 {['All', '10', '20', '50'].map((s: string, index) =>
                                                     <option key={index} value={s}>
