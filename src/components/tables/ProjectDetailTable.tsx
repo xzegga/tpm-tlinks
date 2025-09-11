@@ -189,7 +189,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                         <Td borderWidth={0}
                             colSpan={2}
                         >
-                            <Text py={2} fontWeight={'bold'} w="100%">Translator Comments: {currentUser?.role}</Text>
+                            <Text py={2} fontWeight={'bold'} w="100%">Comments:</Text>
                             {currentUser?.role !== ROLES.Admin && project?.data?.comments ?
                                 <Box background={'yellow.100'} color={'yellow.900'} w={'100%'} p={3} borderRadius={3}>
                                     <Text >{project?.data?.comments}</Text>

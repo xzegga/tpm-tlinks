@@ -62,7 +62,6 @@ export const translatorStatuses = [
 ];
 export const adminStatuses = [
   STATUS.Received,
-  STATUS.Assigned,
   STATUS.InProgress,
   STATUS.Completed,
   STATUS.Archived,

@@ -5,17 +5,20 @@ import {
     AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader,
     AlertDialogOverlay, Button,
     useToast, Select,
-    AlertStatus, Text
+    AlertStatus, Text,
+    Flex,
+    Alert,
 } from '@chakra-ui/react';
 
 import { getProjectById, updateStatus } from '../data/Projects';
 import { ProjectObject } from '../models/project';
 import { ROLES } from '../models/users';
 import { db } from '../utils/init-firebase';
-import { adminStatuses, adminStatusesWithNoTranslators, STATUS, translatorStatuses } from '../utils/value-objects';
+import { adminStatuses, adminStatusesWithNoTranslators, translatorStatuses } from '../utils/value-objects';
 import { useAuth } from '../context/AuthContext';
 import { FaArchive } from 'react-icons/fa';
 import { Tenant } from '../models/clients';
+import { WarningTwoIcon } from '@chakra-ui/icons'
 
 
 export default function ChangeStatusSelector({ project, onSuccess, ids, setProject, button = false, role, tenant }: {
@@ -41,24 +44,15 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
     const toast = useToast()
 
     const handleChangeStatus = (status: string) => {
-        if (status === STATUS.Assigned) {
-            toast({
-                description: `You can't change status to ${status} here, go to the dashboar page to assign a project to a translator.`,
-                status: 'error',
-                duration: 9000,
-                isClosable: true,
-            })
-        } else {
-            if (status !== '' && status !== project?.data.status) {
-                console.log(status)
-                setStatus(status)
-                setIsOpen(true)
-            }
+        if (status !== '' && status !== project?.data.status) {
+            setStatus(status)
+            setIsOpen(true)
         }
     }
 
     const changeStatus = async () => {
         if (project) {
+            setIsOpen(false)
             await validate();
             const response = await getProjectById(project?.id);
 
@@ -76,8 +70,6 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
                 duration: 9000,
                 isClosable: true,
             })
-
-            setIsOpen(false)
         }
 
         if (ids?.length && status) {
@@ -114,17 +106,32 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
         <AlertDialog
             isOpen={isOpen}
             leastDestructiveRef={cancelRef}
+            size={'lg'}
             onClose={onClose}
         >
             <AlertDialogOverlay>
                 <AlertDialogContent>
                     <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                        {project ? <Text>Change Project Status</Text> :
+                        {project ? <Text display={
+                            'flex'
+                        }>Change Project Status</Text> :
                             <Text>You are about to change the state of selected projects.</Text>}
                     </AlertDialogHeader>
 
                     <AlertDialogBody>
-                        Are you sure? You can't undo this action afterwards.
+
+                        <Text>Are you sure you want to change the status to <span style={{ fontWeight: "bold" }}>{status}</span>?</Text>
+                        {project?.data.translatorId && role !== ROLES.Translator &&
+                            <div>
+
+                                <Text display={'inline-block'} pt={2}>This project has already been assigned to a translator</Text>
+                                {project.data.status === 'In Progress' ?
+                                    <span> and is currently <span style={{ fontWeight: "bold" }}>in progress.</span></span> : <span>.</span>}
+                                <Alert status='warning' mt={4} borderRadius={'md'} display={'flex'} alignItems={'center'}>
+                                    <WarningTwoIcon boxSize={10} color={'orange.400'} mr={3} />
+                                    Changing the status will unassign the translator from the project.</Alert>
+                            </div>}
+
                     </AlertDialogBody>
 
                     <AlertDialogFooter>
@@ -137,6 +144,7 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialogOverlay>
-        </AlertDialog>
+        </AlertDialog >
+
     </>
 }

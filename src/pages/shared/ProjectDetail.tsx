@@ -302,7 +302,10 @@ const ProjectDetail: React.FC = () => {
                                 </Flex>
 
                                 {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && (
-                                    <ChangeStatusSelector setProject={setProject} project={project} role={currentUser.role} tenant={tenant} />
+                                    <ChangeStatusSelector
+                                        setProject={setProject}
+                                        project={project} role={currentUser.role}
+                                        tenant={tenant} />
                                 )}
                                 {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>

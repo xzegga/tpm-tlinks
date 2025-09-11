@@ -94,16 +94,16 @@ const AddProject: React.FC = () => {
           tenant: currentUser?.tenant,
           department: project.department ?? currentUser.department,
         }
-      }else{
+      } else {
         if (project?.tenant === '' || project?.tenant === undefined) {
           toast({
-              description: `You must select a client`,
-              status: 'error',
-              duration: 3000,
-              isClosable: true,
+            description: `You must select a client`,
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
           });
 
-          setSaving(false, () => {});
+          setSaving(false, () => { });
           return;
         }
       }
@@ -114,8 +114,6 @@ const AddProject: React.FC = () => {
         ...tenantoptions,
       };
 
-      console.log(tenant);
-      
       await saveProject(projectToSave, files, tenant);
       setSaving(false, () => navigate(`/${currentUser?.role}`));
     }
@@ -154,6 +152,10 @@ const AddProject: React.FC = () => {
       ...(value && { [`${name}`]: value }),
     });
   }
+
+  useEffect(() => {
+    console.log(files, project);
+  }, [files, project])
 
   return (
     <>

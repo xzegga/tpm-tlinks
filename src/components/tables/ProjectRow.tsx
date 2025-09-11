@@ -142,20 +142,23 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                     navigate(`project/${project.id}`);
                 }}
                 py={1.5} px={1.5}
-                pl={4}
-                maxW={65}
+                pl={2}
+                maxW={100}
                 cursor={'pointer'}
                 _hover={{ bg: 'gray.100' }}
             >
                 <Flex alignItems={'center'}>
-                    <Text whiteSpace={'nowrap'} maxW={65} marginRight={0}>
+                    {project?.data?.isUrgent ?
+                        <Box maxW={'35px'}>
+                            <Urgent className="isUrgent" style={{ marginBottom: '5px' }} />
+                        </Box>
+                        : null}
+                    <Text whiteSpace={'nowrap'} maxW={65}>
                         <Tooltip label={project?.data.requestNumber.toString()} aria-label="A tooltip">
                             <span style={{ minWidth: '34px' }}>{shortenName(project?.data.requestNumber.toString(), 5)}</span>
                         </Tooltip>
                     </Text>
-                    {project?.data?.isUrgent ?
-                        <Urgent className="isUrgent" style={{ marginBottom: '5px' }} />
-                        : null}
+
                 </Flex>
             </LinkBox>
             <LinkBox
@@ -168,7 +171,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                 _hover={{ bg: 'gray.100' }}
             >
                 <Link color={'blue.400'}>
-                    <Text whiteSpace={'nowrap'}>{project?.data?.projectId}</Text>
+                    <Text whiteSpace={'nowrap'} pl={2}>{project?.data?.projectId}</Text>
                 </Link>
             </LinkBox>
             <LinkBox
@@ -180,15 +183,15 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                 cursor={'pointer'}
                 _hover={{ bg: 'gray.100' }}
             >
-            <Flex alignItems={'center'}>
-                {badgeConfig.map(({ key, label, color }) =>
-                    (project?.data as Record<string, any>)[key] ? (
-                        <Badge key={key} mr={2} colorScheme={color} px={2}>
-                            {label}
-                        </Badge>
-                    ) : null
-                )}
-            </Flex>
+                <Flex alignItems={'center'}>
+                    {badgeConfig.map(({ key, label, color }) =>
+                        (project?.data as Record<string, any>)[key] ? (
+                            <Badge key={key} mr={2} colorScheme={color} px={2}>
+                                {label}
+                            </Badge>
+                        ) : null
+                    )}
+                </Flex>
             </LinkBox>
             <LinkBox
                 as={Td}
@@ -247,8 +250,8 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
             >
                 {project.data.status && <Status status={project.data.status} />}
             </LinkBox>
-            {tenant.translators ? <>
-                {currentUser?.role !== ROLES.Translator && project.data.status === 'Received' ? <>
+            {tenant.translators && currentUser?.role !== ROLES.Translator ? <>
+                {project.data.status === 'Received' ? <>
                     <Td px={1.5} py={0.5}>
                         <FormControl id="wordCount_number">
                             <Select
@@ -256,6 +259,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                                 maxW={'180px'}
                                 name="department"
                                 value={project.data.translatorId}
+                                defaultValue={'Select'}
                                 onChange={(e) => assignTranslator(e.target.value, project)}
                             >
                                 <option value=''>Select</option>
@@ -270,116 +274,120 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                         </FormControl>
                     </Td>
                 </> : <Td px={1.5} py={0.5}>
-                    {currentUser?.role !== ROLES.Translator && project.data.status !== 'Assigned' ?
-                        <Select
+                    {project.data.translatorId !== '' ?
+                        <>
+                            {getAssignedProjectTranslator(project.id) !== undefined ?
+                                <Tag size={'sm'} py={'2px'} variant='outline' colorScheme='blue' minW={'115px'} justifyContent={'space-between'}>
+                                    <TagLabel p={0.7}>
+                                        <Tooltip label={getAssignedProjectTranslator(project.id)} aria-label='A tooltip'>
+                                            {shortenFileName(getAssignedProjectTranslator(project.id) || '', 10)}
+                                        </Tooltip>
+                                    </TagLabel>
+                                    {project.data.status !== 'Completed' &&
+                                        project.data.status !== 'In Progress' &&
+                                        <TagCloseButton onClick={() => assignTranslator(null, project)} />
+                                    }
+
+                                </Tag> : null
+                            }
+                        </>
+                        : <Select
                             h={'30px'}
                             maxW={'180px'}
                             name="department"
                             disabled={true}
                         >
                             <option value=''>Select</option>
-                        </Select>
-                        : null}
-
-                    {currentUser?.role !== ROLES.Translator && project.data.status === 'Assigned' ? <>
-                        {getAssignedProjectTranslator(project.id) !== undefined ?
-                            <Tag size={'sm'} py={'2px'} variant='outline' colorScheme='blue'>
-                                <TagLabel>
-                                    <Tooltip label={getAssignedProjectTranslator(project.id)} aria-label='A tooltip'>
-                                        {shortenFileName(getAssignedProjectTranslator(project.id) || '', 10)}
-                                    </Tooltip>
-                                </TagLabel>
-                                <TagCloseButton onClick={() => assignTranslator(null, project)} />
-                            </Tag> : null
-                        }
-                    </> : null}
+                        </Select>}
                 </Td>}
-            </> : null}
+            </> : null
+            }
 
-            {currentUser?.role === ROLES.Admin ? <>
-                <Td px={1.5} py={0.5}>
-                    <FormControl id="wordCount_number">
-                        <Input
-                            name="wordCount"
-                            id="wordCount"
-                            value={wordCount}
-                            onChange={(e) => {
-                                dbHandleWordCountChange(e);
-                                setWordCount(Number(e.target.value));
-                            }}
-                            borderColor="gray.300"
-                            _hover={{
-                                borderRadius: 'gray.300'
-                            }}
-                            textAlign={'right'}
-                            fontSize={'xs'}
-                            px={1.5} py={1}
-                            w={'60px'}
-                            h={'30px'}
-                        />
-                    </FormControl>
-                </Td>
-                <Td px={1.5} py={0.5}>
-                    <FormControl id="billed_amount">
-                        <Input
-                            name="billed"
-                            id="billed"
-                            value={billed}
-                            onChange={(e) => {
-                                dbHandleBilledChange(e);
-                                setBilled(parseFloat(e.target.value));
-                            }}
-                            borderColor="gray.300"
-                            _hover={{
-                                borderRadius: 'gray.300'
-                            }}
-                            textAlign={'right'}
-                            fontSize={'xs'}
-                            px={1.5} py={1}
-                            w={'60px'}
-                            h={'30px'}
-                            type="number"
-                        />
-                    </FormControl>
-                </Td>
-            </> : <>
-                {currentUser?.role !== ROLES.Translator && status === 'Quoted' && !projectLoading ?
-                    <>
-                        <LinkBox
-                            py={1.5} px={1.5}
-                            as={Td}
-                            onClick={() => {
-                                navigate(`project/${project.id}`);
-                            }}
-                            cursor={'pointer'}
-                            style={{ whiteSpace: 'nowrap' }}
-                            _hover={{ bg: 'gray.100' }}
-                            fontSize={'sm'}
-                            textAlign={'left'}
-                        >
-                            {project.data.wordCount}
-                        </LinkBox>
-                        <LinkBox
-                            p={1}
-                            as={Td}
-                            onClick={() => {
-                                navigate(`project/${project.id}`);
-                            }}
-                            cursor={'pointer'}
-                            style={{ whiteSpace: 'nowrap' }}
-                            _hover={{ bg: 'gray.100' }}
-                            textAlign={'right'}
-                            fontSize={'sm'}
-                        >
-                            <Flex justifyContent={'space-between'}>
-                                <Text>$ </Text>
-                                <Text>{project.data.billed}</Text>
-                            </Flex>
-                        </LinkBox>
-                    </> :
-                    null
-                }
-            </>
+            {
+                currentUser?.role === ROLES.Admin ? <>
+                    <Td px={1.5} py={0.5}>
+                        <FormControl id="wordCount_number">
+                            <Input
+                                name="wordCount"
+                                id="wordCount"
+                                value={wordCount}
+                                onChange={(e) => {
+                                    dbHandleWordCountChange(e);
+                                    setWordCount(Number(e.target.value));
+                                }}
+                                borderColor="gray.300"
+                                _hover={{
+                                    borderRadius: 'gray.300'
+                                }}
+                                textAlign={'right'}
+                                fontSize={'xs'}
+                                px={1.5} py={1}
+                                w={'60px'}
+                                h={'30px'}
+                            />
+                        </FormControl>
+                    </Td>
+                    <Td px={1.5} py={0.5}>
+                        <FormControl id="billed_amount">
+                            <Input
+                                name="billed"
+                                id="billed"
+                                value={billed}
+                                onChange={(e) => {
+                                    dbHandleBilledChange(e);
+                                    setBilled(parseFloat(e.target.value));
+                                }}
+                                borderColor="gray.300"
+                                _hover={{
+                                    borderRadius: 'gray.300'
+                                }}
+                                textAlign={'right'}
+                                fontSize={'xs'}
+                                px={1.5} py={1}
+                                w={'60px'}
+                                h={'30px'}
+                                type="number"
+                            />
+                        </FormControl>
+                    </Td>
+                </> : <>
+                    {currentUser?.role !== ROLES.Translator && status === 'Quoted' && !projectLoading ?
+                        <>
+                            <LinkBox
+                                py={1.5} px={1.5}
+                                as={Td}
+                                onClick={() => {
+                                    navigate(`project/${project.id}`);
+                                }}
+                                cursor={'pointer'}
+                                style={{ whiteSpace: 'nowrap' }}
+                                _hover={{ bg: 'gray.100' }}
+                                fontSize={'sm'}
+                                textAlign={'left'}
+                            >
+                                {project.data.wordCount}
+                            </LinkBox>
+                            <LinkBox
+                                p={1}
+                                as={Td}
+                                onClick={() => {
+                                    navigate(`project/${project.id}`);
+                                }}
+                                cursor={'pointer'}
+                                style={{ whiteSpace: 'nowrap' }}
+                                _hover={{ bg: 'gray.100' }}
+                                textAlign={'right'}
+                                fontSize={'sm'}
+                            >
+                                <Flex justifyContent={'space-between'}>
+                                    <Text>$ </Text>
+                                    <Text>{project.data.billed}</Text>
+                                </Flex>
+                            </LinkBox>
+                        </> :
+                        null
+                    }
+                </>
             }
 
             <Td maxW={15} p={0}>
@@ -403,7 +411,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                     }
                 </Flex>
             </Td>
-        </Tr>
+        </Tr >
 
     );
 };
