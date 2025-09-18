@@ -9,7 +9,7 @@ import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import {
   Box, Breadcrumb, BreadcrumbItem, Button, Checkbox, CircularProgress, Container, Flex,
   FormControl, FormLabel, Heading, Input, InputGroup, Select, Spacer, Stack, Text, Textarea,
-  VStack, Wrap, WrapItem
+  VStack, Wrap, WrapItem, Spinner, useToast
 } from '@chakra-ui/react';
 
 import Urgent from '../../assets/isUrgent.svg?react';
@@ -30,6 +30,10 @@ const initialState: Project = {
   isEditing: false,
   isTranslation: true,
   isCertificate: false,
+  isBittext: false,
+  isGlossary: false,
+  isMemory: false,
+  isStyleSheet: false,
   sourceLanguage: 'English',
   targetLanguage: 'Spanish',
   timeLine: Timestamp.fromDate(addDays(new Date(), 5)),
@@ -39,7 +43,8 @@ const initialState: Project = {
   documents: [],
   isUrgent: false,
   tenant: '',
-  department: ''
+  department: '',
+  translatorId: ''
 };
 
 const AddProject: React.FC = () => {
@@ -52,6 +57,7 @@ const AddProject: React.FC = () => {
     tenant: tenant.slug,
     department: currentUser.department
   });
+  const toast = useToast();
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const navigate = useNavigate();
@@ -69,9 +75,9 @@ const AddProject: React.FC = () => {
 
   }, []);
 
-  const saveRequest = async () => {
-    if (!files) return;
 
+  const saveRequest = async () => {
+    if (!files || saving) return;
     if (currentUser) {
       await validate();
       setSaving(true, () => console.log);
@@ -87,6 +93,18 @@ const AddProject: React.FC = () => {
         tenantoptions = {
           tenant: currentUser?.tenant,
           department: project.department ?? currentUser.department,
+        }
+      } else {
+        if (project?.tenant === '' || project?.tenant === undefined) {
+          toast({
+            description: `You must select a client`,
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+
+          setSaving(false, () => { });
+          return;
         }
       }
 
@@ -135,6 +153,10 @@ const AddProject: React.FC = () => {
     });
   }
 
+  useEffect(() => {
+    console.log(files, project);
+  }, [files, project])
+
   return (
     <>
       {currentUser && (
@@ -177,6 +199,9 @@ const AddProject: React.FC = () => {
                                     size="md"
                                     flex={1}
                                   >
+                                    <option value={''}>
+                                      Select Client
+                                    </option>
                                     {tenants && tenants.length ? <>
                                       {tenants.map((tn) => <option
                                         key={tn.id}
@@ -203,7 +228,7 @@ const AddProject: React.FC = () => {
                                   size="md"
                                   flex={1}
                                 >
-                                  
+
                                   {
                                     currentUser.role === ROLES.Admin ?
                                       <>
@@ -287,6 +312,19 @@ const AddProject: React.FC = () => {
                                 <Checkbox name="isCertificate" id="isCertificate" checked={project.isCertificate} onChange={handleCheckbox}>
                                   Requires certification
                                 </Checkbox>
+                                <Checkbox required name="isBittext" id="isBittext"
+                                  checked={project.isBittext} onChange={handleCheckbox}>
+                                  Bitext
+                                </Checkbox>
+                                <Checkbox name="isGlossary" id="isGlossary" checked={project.isGlossary} onChange={handleCheckbox}>
+                                  Glossary
+                                </Checkbox>
+                                <Checkbox name="isMemory" id="isMemory" checked={project.isMemory} onChange={handleCheckbox}>
+                                  Memory
+                                </Checkbox>
+                                <Checkbox name="isStyleSheet" id="isStyleSheet" checked={project.isStyleSheet} onChange={handleCheckbox}>
+                                  StyleSheet
+                                </Checkbox>
                               </Stack>
 
                             </FormControl>
@@ -323,8 +361,9 @@ const AddProject: React.FC = () => {
                             </FormControl>
                             <FormControl id="name" float="right">
                               {files.length > 0 ? (
-                                <Button variant="outline" color="white" onClick={saveRequest}>
+                                <Button colorScheme={saving ? "gray" : "blue"} disabled={saving} onClick={saveRequest}>
                                   Submit Project
+                                  {saving ? <Spinner size="xs" ml={2} /> : null}
                                 </Button>
                               ) : (
                                 <Text color={'yellow.300'}>
@@ -363,8 +402,8 @@ const AddProject: React.FC = () => {
                 </Flex>
               )}
             </Flex>
-          </Box>
-        </Container>
+          </Box >
+        </Container >
       )}
     </>
   );

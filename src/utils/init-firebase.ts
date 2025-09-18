@@ -1,8 +1,8 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getAuth } from "firebase/auth";
-import { getFunctions } from "firebase/functions";
+import { initializeApp } from 'firebase/app';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { connectStorageEmulator, getStorage } from 'firebase/storage';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -14,14 +14,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig, {});
+
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-
-// if(location.hostname === 'localhost') {
-//   functions.customDomain = 'http://localhost:5001/tpm-tlinks/us-central1';
-// }
-
+if (
+  window.location.hostname === 'localhost' &&
+  import.meta.env.VITE_EMULATORS === 'true'
+) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+  connectFunctionsEmulator(functions, 'localhost', 5003);
+  connectFirestoreEmulator(db, '127.0.0.1', 5004);
+  connectStorageEmulator(storage, '127.0.0.1', 9199);
+}

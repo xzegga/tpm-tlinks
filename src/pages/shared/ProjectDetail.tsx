@@ -1,4 +1,4 @@
-import { Container, Flex, Box, Breadcrumb, BreadcrumbItem, Spacer, Text, Heading, useToast, Button, CircularProgress } from '@chakra-ui/react';
+import { Container, Flex, Box, Breadcrumb, BreadcrumbItem, Spacer, Text, Heading, useToast, Button, CircularProgress, Wrap } from '@chakra-ui/react';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import React, { useEffect } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
@@ -9,27 +9,38 @@ import { ref, getDownloadURL, getBlob } from 'firebase/storage';
 import fileDownload from 'js-file-download'
 import ProjectTable from '../../components/tables/ProjectDetailTable';
 import DocumentTable from '../../components/tables/DocumentTable';
-import { GrDocumentZip } from 'react-icons/gr';
+import { GrArchive, GrDocumentZip } from 'react-icons/gr';
 import { ProjectObject } from '../../models/project';
 import { Document, DocumentObject, ProcessedDocument } from '../../models/document';
-import { getDocuments, saveCertificate, saveTargetDocuments } from '../../data/Documents';
+import { saveCertificate, saveMemory, saveTargetDocuments, saveDocumentServices, getDocuments } from '../../data/Documents';
 import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import './AddProject.css';
 import InputFileBtn from '../../components/InputFileBtn';
 import { getProjectById } from '../../data/Projects';
 import Urgent from '../../assets/isUrgent.svg?react';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import JSZip from 'jszip';
 import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
 import ChangeStatusSelector from '../../components/ChangeStatus';
+import { useDocResult } from '../../hooks/useDocResult';
 
+export const DocumentType = {
+    Certificate: 'Certificate',
+    Memory: 'Memory',
+    Glossary: 'Glossary',
+    Bittext: 'Bittext',
+    StyleSheet: 'StyleSheet'
+} as const;
 
-const jszip = new JSZip();
+type DocumentType = 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet'
+type DocumentsWithType = {
+    type: DocumentType,
+    doc: DocumentObject
+}
 
 const ProjectDetail: React.FC = () => {
     const { projectId } = useParams();
-    const { currentUser } = useStore();
+    const { currentUser, tenant } = useStore();
     const toast = useToast()
 
 
@@ -37,8 +48,43 @@ const ProjectDetail: React.FC = () => {
     const [project, setProject] = React.useState<ProjectObject>();
     const [documents, setDocuments] = React.useState<DocumentObject[]>([]);
     const [processedDocuments, setProcessedDocuments] = React.useState<ProcessedDocument[]>([])
-    const [certificate, setCertificate] = React.useState<DocumentObject>();
+    const [docs, setDocs] = React.useState<DocumentsWithType[]>([]);
 
+    const { getDocTypeInfo } = useDocResult();
+    useEffect(() => {
+        if (documents.length) {
+
+            const docArray: DocumentsWithType[] = documents.map((doc) => {
+                const info = getDocTypeInfo(doc.data);
+                if (!info) return null;
+                return {
+                    type: info.typeLabel,
+                    doc: doc,
+                } as DocumentsWithType;
+            }).filter((item) => item !== null);
+
+            setDocs(docArray);
+            updateProcessedDocuments();
+        }
+    }, [documents])
+
+    const updateProcessedDocuments = () => {
+        if (projectId) {
+            getDocuments(projectId, documents).then(proccesedDocs => {
+                if (proccesedDocs) setProcessedDocuments(proccesedDocs)
+            });
+        }
+    }
+
+    const setDocumetsState = (type: DocumentType, doc: DocumentObject) => {
+        const itemDoc = docs.find((doc) => doc.type === type);
+        if (!itemDoc) {
+            setDocs([
+                ...docs,
+                { type, doc }
+            ])
+        }
+    }
     useEffect(() => {
         if (currentUser && projectId) {
             getProjectById(projectId).then(response => {
@@ -47,13 +93,6 @@ const ProjectDetail: React.FC = () => {
 
         }
     }, [currentUser])
-
-    useEffect(() => {
-        if (documents?.length && projectId) {
-            setCertificate(documents.find(doc => doc.data.isCertificate));
-            updateProcessedDocuments();
-        }
-    }, [documents]);
 
     useEffect(() => {
         // Get documents sub-collection from firebase by project id
@@ -86,6 +125,8 @@ const ProjectDetail: React.FC = () => {
     }
 
     const downloadZippedFiles = async () => {
+        const jszip = new JSZip();
+
         for (const docObj of processedDocuments) {
             for (const file of docObj.documents)
                 if (file.data.path) {
@@ -107,7 +148,7 @@ const ProjectDetail: React.FC = () => {
     }
 
     const downloadSourceZippedFiles = async () => {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const jszip = new JSZip();
         for (const file of documents) {
             const docRef = await ref(storage, file.data.path);
             jszip.file(docRef.name, getBlob(docRef));
@@ -119,22 +160,14 @@ const ProjectDetail: React.FC = () => {
 
     }
 
-    const updateProcessedDocuments = () => {
-        if (projectId) {
-            getDocuments(projectId, documents).then(proccesedDocs => {
-                if (proccesedDocs) setProcessedDocuments(proccesedDocs)
-            });
-        }
-    }
-
     const uploadFile = async (
         files: FileList,
         document: DocumentObject | null = null,
         target: string | null = null) => {
-        // Get month name of current date             
-        if (project && currentUser?.role === ROLES.Admin && document && target) {
-            setSaving(true, () => console.log("Saving"))
 
+        // Get month name of current date
+        if (project && (currentUser?.role === ROLES.Admin || currentUser.role === ROLES.Translator) && document && target) {
+            setSaving(true, () => console.log("Saving"))
             const newDocument = await saveTargetDocuments(files, document, project, target)
             if (newDocument.length) {
                 const newdocuments = processedDocuments.slice();
@@ -161,7 +194,7 @@ const ProjectDetail: React.FC = () => {
             if (projectId && project) {
                 setSaving(true, () => console.log("saving"))
                 const projectRef = doc(collection(db, 'projects'), projectId);
-                const newCert = await saveCertificate(files[0], project.data.projectId, projectRef)
+                const newCert = await saveCertificate(files[0], project, projectRef)
                 setSaving(false, () => console.log("saving"));
                 toast({
                     description: `Certificate uploaded successfully`,
@@ -180,6 +213,65 @@ const ProjectDetail: React.FC = () => {
             }
         }
     }
+
+    const uploadMemory = async (
+        files: FileList) => {
+
+        setSaving(true, () => console.log("saving"))
+        if (projectId && project) {
+            setSaving(true, () => console.log("saving"))
+            const projectRef = doc(collection(db, 'projects'), projectId);
+            const newCert = await saveMemory(files[0], project, projectRef)
+            setSaving(false, () => console.log("saving"));
+            toast({
+                description: `Memory uploaded successfully`,
+                status: 'success',
+                duration: 9000,
+                isClosable: true,
+            })
+            const [newFile] = newCert
+            getDoc(newFile).then(dc => {
+                const newDocuments = [{
+                    id: dc.id,
+                    data: dc.data() as Document
+                }, ...documents]
+                setDocuments(newDocuments)
+            })
+        }
+    }
+
+    const uploadTypeService = async (
+        files: FileList, type: 'Certificate' | 'Memory' | 'Glossary' | 'Bittext' | 'StyleSheet') => {
+
+
+        setSaving(true, () => console.log("saving"))
+        if (projectId && project) {
+            setSaving(true, () => console.log("saving"))
+            const projectRef = doc(collection(db, 'projects'), projectId);
+            const newCert = await saveDocumentServices(files[0], project, projectRef, type)
+            setSaving(false, () => console.log("saving"));
+            toast({
+                description: `${type} uploaded successfully`,
+                status: 'success',
+                duration: 9000,
+                isClosable: true,
+            })
+            const [newFile] = newCert
+
+            getDoc(newFile).then(dc => {
+                const newDocument = {
+                    id: dc.id,
+                    data: dc.data() as Document
+                }
+                const newDocuments = [newDocument, ...documents]
+                setDocumetsState(type, newDocument)
+                setDocuments(newDocuments)
+            })
+
+        }
+    }
+
+    console.log(project?.data);
 
     return (
         <>
@@ -209,8 +301,11 @@ const ProjectDetail: React.FC = () => {
                                         </Flex> : null}
                                 </Flex>
 
-                                {currentUser.role === ROLES.Admin && (
-                                    <ChangeStatusSelector setProject={setProject} project={project} />
+                                {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && (
+                                    <ChangeStatusSelector
+                                        setProject={setProject}
+                                        project={project} role={currentUser.role}
+                                        tenant={tenant} />
                                 )}
                                 {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
                             </Flex>
@@ -221,10 +316,46 @@ const ProjectDetail: React.FC = () => {
                         <Spacer h={'40px'} />
                         <Flex justifyContent={'space-between'} alignItems={'center'}>
                             <Heading size='md' pl={4} color='blue.400'>Documents</Heading>
-                            <Flex justifyContent={'flex-end'} mb={2} mr={3}>
-                                {(project?.data.isCertificate && !certificate) && <InputFileBtn uploadFile={uploadFile} />}
+                            <Wrap spacing={3} justify={'flex-end'} mb={2} mr={3}>
+                                {currentUser?.role === ROLES.Admin || currentUser?.role === ROLES.Translator ? <>
+                                    {(project?.data.isMemory && !docs.find((doc) => doc.type === DocumentType.Memory)) &&
+                                        <InputFileBtn
+                                            uploadFile={(uploadMemory)}
+                                            text={"Upload Memory"}
+                                            scheme='yellow'
+                                            icon={GrArchive} />}
 
-                                {currentUser?.role === ROLES.Client && processedDocuments?.length >= 1 && <Button ml={3}
+                                    {(project?.data.isCertificate && !docs.find((doc) => doc.type === DocumentType.Certificate)) &&
+                                        <InputFileBtn
+                                            uploadFile={uploadFile}
+                                            text={"Add Certificate"}
+                                            scheme='green'
+                                            icon={GrArchive} />}
+
+                                    {(project?.data.isBittext && !docs.find((doc) => doc.type === DocumentType.Bittext)) &&
+                                        <InputFileBtn
+                                            uploadFile={(files) => uploadTypeService(files, DocumentType.Bittext)}
+                                            text={"Add Bittext"}
+                                            scheme='purple'
+                                            icon={GrArchive} />}
+
+                                    {(project?.data.isGlossary && !docs.find((doc) => doc.type === DocumentType.Glossary)) &&
+                                        <InputFileBtn
+                                            uploadFile={(files) => uploadTypeService(files, DocumentType.Glossary)}
+                                            text={"Add Glossary"}
+                                            scheme='orange'
+                                            icon={GrArchive} />}
+
+                                    {(project?.data.isStyleSheet && !docs.find((doc) => doc.type === DocumentType.StyleSheet)) &&
+                                        <InputFileBtn
+                                            uploadFile={(files) => uploadTypeService(files, DocumentType.StyleSheet)}
+                                            text={"Add StyleSheet"}
+                                            scheme='cyan'
+                                            icon={GrArchive} />}
+                                </> : null
+                                }
+
+                                {currentUser?.role === ROLES.Client && processedDocuments?.length >= 1 && <Button
                                     leftIcon={<GrDocumentZip className={'white-icon'} />}
                                     colorScheme='blue'
                                     onClick={() => downloadZippedFiles()}>
@@ -233,7 +364,7 @@ const ProjectDetail: React.FC = () => {
                                     </Flex>
                                 </Button>}
 
-                                {currentUser.role === ROLES.Admin && documents?.length >= 1 && <Button ml={3}
+                                {(currentUser.role === ROLES.Admin || currentUser.role === ROLES.Translator) && documents?.length >= 1 && <Button
                                     leftIcon={<GrDocumentZip className={'white-icon'} />}
                                     colorScheme='blue'
                                     onClick={() => downloadSourceZippedFiles()}>
@@ -244,11 +375,11 @@ const ProjectDetail: React.FC = () => {
 
 
                                 {project?.data?.status === 'Completed' &&
-                                    <ChangeStatusSelector setProject={setProject} project={project} button={true}  />                                    
+                                    <ChangeStatusSelector setProject={setProject} project={project} button={true} role={currentUser.role} />
                                 }
-                            </Flex>
+                            </Wrap>
                         </Flex>
-                        <Box className={saving ? 'blured' : ''} position={'relative'}>
+                        <Box className={saving ? 'blured' : ''} position={'relative'} >
                             <DocumentTable
                                 documents={documents}
                                 setDocuments={setDocuments}
@@ -282,7 +413,7 @@ const ProjectDetail: React.FC = () => {
                 </Container >
             )}
 
-            
+
         </>
     );
 };

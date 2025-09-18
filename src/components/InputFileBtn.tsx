@@ -1,13 +1,16 @@
 import { Button, Flex, Text } from '@chakra-ui/react';
 import React, { useRef } from 'react';
-import { GrDocumentZip } from 'react-icons/gr';
 import '../pages/shared/AddProject.css';
+import { IconType } from 'react-icons';
 
 interface InputFileProps {
     uploadFile?: (files: FileList) => Promise<void>;
+    text: string;
+    scheme: string;
+    icon?: IconType;
 }
 
-const InputFileBtn: React.FC<InputFileProps> = ({ uploadFile }) => {
+const InputFileBtn: React.FC<InputFileProps> = ({ uploadFile, text, scheme, icon }) => {
 
     const inputFile = useRef<HTMLInputElement>(null)
 
@@ -30,11 +33,11 @@ const InputFileBtn: React.FC<InputFileProps> = ({ uploadFile }) => {
         <>
             <input type='file' ref={inputFile} style={{ display: 'none' }} onChange={(e) => onChangeFile(e)} multiple />
             <Button
-                leftIcon={<GrDocumentZip className={'white-icon'} />}
-                colorScheme='green'
+                {...(icon ? { leftIcon: React.createElement(icon, {}) } : {})}
+                colorScheme={scheme}
                 onClick={() => uploadFileClick()}>
                 <Flex alignItems={'center'}>
-                    <Text ml={2}>Add Certificate</Text>
+                    <Text ml={2}>{text}</Text>
                 </Flex>
             </Button>
         </>

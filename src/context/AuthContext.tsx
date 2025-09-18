@@ -16,6 +16,7 @@ import { ROLES } from '../models/users';
 import { useStore } from '../hooks/useGlobalStore';
 import { LoggedUser, initialGlobalState } from '../store/initialGlobalState';
 import { getUserById, validateSession } from '../data/users';
+import { STORAGE_KEY } from '../hooks/usePreviousRoute';
 
 export type User = firebase.User | null;
 
@@ -92,7 +93,11 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     return confirmPasswordReset(auth, oobCode, newPassword)
   }
 
-  const logout = () => {
+  const logout = async () => {
+    await new Promise((resolve) => {
+      localStorage.removeItem(STORAGE_KEY);
+      setTimeout(resolve, 0);
+    });
     setState({ ...initialGlobalState })
     return signOut(auth)
   }
@@ -127,11 +132,14 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
           department: claims.department,
         } as LoggedUser
 
-        setState({
-          currentUser: { ...user, token: usr.accessToken }
-        });
+        // const current = await getUserById(claims, user);
+        const current = await getUserById(usr.uid, user);
+        if (current) {
+          setState({
+            currentUser: { ...current, token: usr.accessToken }
+          });
+        }
 
-        await getUserById(user);
       }
     }
   }
@@ -181,6 +189,8 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     }
     if (!valid) logout();
   }
+
+
 
 
   const value: ContextState = {

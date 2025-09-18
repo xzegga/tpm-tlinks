@@ -60,7 +60,7 @@ const Users: React.FC = () => {
                 const usr = updatedUsers.find(usr => usr.id === user.id)
                 usr.data = {
                     ...usr.data,
-                    ...(value && { [`${name}`]: value }),
+                    [`${name}`]: value,
                     ...(name === 'tenant' && { department: 'all' })
                 }
 
@@ -121,7 +121,7 @@ const Users: React.FC = () => {
             const response = await removeUser(currentUser.token, user.data.uid, user.id)
             await getUsers();
             setState({ loading: false })
-            console.log({response})
+            console.log({ response })
             toast({
                 description: response.data,
                 status: 'success',
@@ -315,6 +315,7 @@ const Users: React.FC = () => {
                                         >
                                             <option value={ROLES.Admin}>Admin</option>
                                             <option value={ROLES.Client}>Client</option>
+                                            <option value={ROLES.Translator}>Translator</option>
                                             <option value={ROLES.Unauthorized}>Unauthorized</option>
                                         </Select>
                                     </Td>
@@ -322,8 +323,7 @@ const Users: React.FC = () => {
                                         <TenantDropdown
                                             value={user.data?.tenant || 'guess'}
                                             disabled={
-                                                (user.data?.role === ROLES.Admin && currentUser?.uid === user.id)
-                                                || !user.data?.role
+                                                !user.data?.role
                                                 || user.data?.role === ROLES.Unauthorized
                                             }
                                             handleChange={(e: any) => handleRole(e, user)}
@@ -336,18 +336,16 @@ const Users: React.FC = () => {
                                             name="department"
                                             value={user.data?.department || 'all'}
                                             onChange={(e) => handleRole(e, user)}
-                                            disabled={
-                                                (user.data?.role === ROLES.Admin && currentUser?.uid === user.id)
-                                                || !user.data?.tenant
+                                            disabled={!user.data?.tenant
                                                 || user.data?.role === ROLES.Unauthorized
                                                 || user.data?.tenant === 'none'
                                             }
                                         >
                                             <option value='all'>All</option>
                                             {tenants && tenants.length ? <>
-                                                {tenants.find(tn => tn.slug === user.data?.tenant)?.departments.map((dp) =>
+                                                {tenants.find(tn => tn.slug === user.data?.tenant)?.departments.map((dp, index) =>
                                                     <option
-                                                        key={dp}
+                                                        key={index}
                                                         value={dp}
                                                     >{dp}
                                                     </option>)

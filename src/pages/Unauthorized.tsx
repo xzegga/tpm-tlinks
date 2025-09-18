@@ -6,11 +6,11 @@ import Navlnk from '../components/NavLnk';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../assets/logo.png';
 
+
 const Unauthorized: React.FC = () => {
     const { logout } = useAuth()
     const navigate = useNavigate()
     const location = useLocation();
-
     const logoutFn = async (e: React.ChangeEvent<unknown>) => {
         e.preventDefault()
         await logout()

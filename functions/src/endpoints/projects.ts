@@ -1,11 +1,14 @@
-import {logger} from "firebase-functions/v2";
-import {CallableRequest, HttpsError} from "firebase-functions/v2/https";
-import getWereByDate from "../were/were-by-date";
-import getWhereByRequestId from "../were/were-by-request-id";
-import getWereByStatus from "../were/were-by-status";
-import {Filter} from "../types/types";
-import {DecodedIdToken, getAuth} from "firebase-admin/auth";
-import getWereByTenant from "../were/were-by-tenant";
+/* eslint-disable object-curly-spacing */
+import { logger } from 'firebase-functions/v2';
+import { CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import getWereByDate from '../were/were-by-date';
+import getWhereByRequestId from '../were/were-by-request-id';
+import getWereByStatus from '../were/were-by-status';
+import { Filter } from '../types/types';
+import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
+import getWereByTenant from '../were/were-by-tenant';
+import getWereTranslatorId from '../were/were-by-translator';
+import { getUsersNamesByUids } from './userName';
 
 /**
  * Retrieves project data based on specified filters and pagination options.
@@ -18,7 +21,7 @@ import getWereByTenant from "../were/were-by-tenant";
  */
 export default async function getProjectsData(
   db: FirebaseFirestore.Firestore,
-  request: CallableRequest<any>
+  request: CallableRequest<any>,
 ) {
   const {
     status,
@@ -32,38 +35,44 @@ export default async function getProjectsData(
     tenant,
   } = request.data as any;
 
+  logger.error('Error trying to apply selected filters', request.data);
+
   const auth = getAuth();
   const validToken: DecodedIdToken = await auth.verifyIdToken(token);
 
   if (!validToken) {
-    return new HttpsError("internal", "Error getting projects");
+    return new HttpsError('internal', 'Error getting projects');
   }
 
-  if (validToken.role === "unauthorized") {
-    return new HttpsError("internal", "Permissions denied");
+  if (validToken.role === 'unauthorized') {
+    return new HttpsError('internal', 'Permissions denied');
   }
 
   const whereClause: Filter[] = [];
 
-  if (requestdb !== "") {
+  if (requestdb !== '') {
     await getWhereByRequestId(requestdb, whereClause);
   } else {
     // Building where clause array
-    await getWereByStatus(status, whereClause);
+    if (validToken.role === 'translator') {
+      await getWereTranslatorId(validToken.uid, whereClause);
+    } else {
+      await getWereByStatus(status, whereClause);
+    }
     await getWereByDate(monthSelected, yearSelected, whereClause);
   }
 
-  if (validToken?.tenant && validToken?.role !== "admin") {
+  if (validToken?.tenant && validToken?.role !== 'admin') {
     await getWereByTenant(validToken, whereClause);
   } else {
-    if (tenant && tenant !== "all") {
+    if (tenant && tenant !== 'all') {
       await getWereByTenant(validToken, whereClause, tenant);
     }
   }
 
   try {
-    const collectionRef = db.collection("projects");
-    let query = collectionRef.orderBy("created", "desc");
+    const collectionRef = db.collection('projects');
+    let query = collectionRef.orderBy('created', 'desc');
 
     // Apply where clauses if any
     if (whereClause.length > 0) {
@@ -77,8 +86,8 @@ export default async function getProjectsData(
     if (snapshot.data().count === 0) return [];
 
     const count = snapshot.data().count;
-    const paging = pagination !== "All" ?
-      parseInt(pagination) : snapshot.data().count;
+    const paging =
+      pagination !== 'All' ? parseInt(pagination) : snapshot.data().count;
 
     if (lastDoc && !newQuery) {
       const lastSnapShot = await collectionRef.doc(lastDoc).get();
@@ -90,20 +99,46 @@ export default async function getProjectsData(
     const querySnapshot = await query.get();
 
     if (querySnapshot.empty) {
-      return {projects: [], lastDoc: null, count: 0};
+      return { projects: [], lastDoc: null, count: 0 };
     }
 
-    const nextLastDoc =
-      querySnapshot.docs[querySnapshot.docs.length - 1].id;
+    const nextLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1].id;
 
     const projectsData = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       data: doc.data(),
     }));
 
-    return {projects: projectsData, lastDoc: nextLastDoc, count};
+    const translatorRequests = projectsData
+      .filter((proj) => proj.data.translatorId) // Solo si hay un `translatorId`
+      .map((proj) => ({
+        projectId: proj.id,
+        uid: proj.data.translatorId,
+      }));
+
+    let translatorNames = [];
+
+    if (translatorRequests.length > 0) {
+      const callableRequest = {
+        data: { users: translatorRequests, token },
+        rawRequest: {},
+      } as CallableRequest<any>;
+
+      const response = await getUsersNamesByUids(db, callableRequest);
+
+      if (response && response.users) {
+        translatorNames = response.users;
+      }
+    }
+
+    return {
+      projects: projectsData,
+      lastDoc: nextLastDoc,
+      count,
+      translators: translatorNames,
+    };
   } catch (error) {
-    logger.error("Error trying to apply selected filters", error);
-    throw new HttpsError("internal", "Error getting projects");
+    logger.error('Error trying to apply selected filters', error);
+    throw new HttpsError('internal', 'Error getting projects');
   }
 }

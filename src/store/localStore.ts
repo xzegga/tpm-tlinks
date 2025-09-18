@@ -9,7 +9,7 @@ const setLocalStore = (newState: any) => {
     storage: Storage,
     keyValue: string,
     keyName: string,
-    value: any
+    value: any,
   ) => {
     storage.setItem(keyValue || keyName, value);
   };
@@ -18,7 +18,7 @@ const setLocalStore = (newState: any) => {
     storageKeys: string[],
     storage: Storage,
     state: any,
-    key: string
+    key: string,
   ) => {
     storageKeys.forEach((k) => {
       // Get key dot notation property names and localStorey key name suggested

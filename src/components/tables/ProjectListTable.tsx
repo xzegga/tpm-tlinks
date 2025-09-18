@@ -6,6 +6,8 @@ import { useStore } from '../../hooks/useGlobalStore';
 import { ProjectObject } from '../../models/project';
 import { ROLES } from '../../models/users';
 import ProjectRow from './ProjectRow';
+import { useAuth } from '../../context/AuthContext';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 interface ProjectListTableProps {
     projects: ProjectObject[];
@@ -14,8 +16,10 @@ interface ProjectListTableProps {
 
 const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removeProject }) => {
     const { currentUser } = useStore();
-    const { status, loading, loadingMore } = useStore()
-
+    const { status, loading, loadingMore, tenant } = useStore()
+    const { validate } = useAuth();
+    const { setState } = useStore()
+    const [translators, setTranslators] = useState([]);
     const [urgentProjects, setUrgentProjects] = useState<ProjectObject[]>([]);
     const [commonProjects, setCommonProjects] = useState<ProjectObject[]>([]);
 
@@ -27,9 +31,37 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
             [...projects.filter((prj) => !prj.data.isUrgent),
             ...projects.filter((prj) => prj.data.isUrgent === true && ['Archived'].includes(prj.data.status))]
         )
+        getTranslatorUsers();
 
 
     }, [projects])
+
+    const getTranslatorUsers = async () => {
+        try {
+            if (currentUser) {
+                await validate();
+                setState({ loading: true, loadingMore: true });
+                const functions = getFunctions();
+                const getTranslators = httpsCallable(functions, 'getTranslatorUsers');
+                if (currentUser.role !== ROLES.Translator) {
+                    const usersData: any = await getTranslators({
+                        tenant: currentUser.tenant,
+                        department: currentUser.department,
+                        role: ROLES.Translator,
+                        token: currentUser.token
+                    });
+
+                    setTranslators(usersData?.data || []);
+                }
+                setState({ loading: false, loadingMore: false });
+            }
+
+        } catch (error) {
+            // Handle error
+            setTranslators([]);
+            setState({ loading: false, loadingMore: false });
+        }
+    };
 
     return (
         <Box position={'relative'}>
@@ -60,6 +92,10 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>Target</Th>
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
+
+                                {currentUser.role !== ROLES.Translator &&
+                                    tenant?.translators &&
+                                    <Th px={1} textAlign={'center'}>Translator</Th>}
                                 {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>
@@ -71,7 +107,8 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                             {urgentProjects.map((project: ProjectObject) => (
                                 <ProjectRow key={project.id}
                                     project={project}
-                                    removeProject={removeProject} />
+                                    removeProject={removeProject}
+                                    translators={translators} />
                             ))}
                         </Tbody>
                     </Table >
@@ -88,6 +125,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>Target</Th>
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
+                                {currentUser.role !== ROLES.Translator && tenant.translators && <Th px={1} textAlign={'center'}>Translator</Th>}
                                 {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>
@@ -97,14 +135,18 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                         </Thead>
                         <Tbody>
                             {commonProjects.map((project: ProjectObject) => (
-                                <ProjectRow 
+                                <ProjectRow
                                     key={project.id}
                                     project={project}
-                                    removeProject={removeProject} />
+                                    removeProject={removeProject}
+                                    translators={translators} />
                             ))}
-                            {projects.length === 0 ? <Tr><Td colSpan={6}>
-                                <Center>No projects found</Center>
-                            </Td></Tr> : null}
+                            {projects.length === 0 ?
+                                <Tr>
+                                    <Td colSpan={6}>
+                                        <Center>No projects found</Center>
+                                    </Td>
+                                </Tr> : null}
                         </Tbody>
                     </Table >
                     : null}

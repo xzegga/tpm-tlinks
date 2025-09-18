@@ -33,6 +33,16 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
         dbHandleWordCountChange
     } = useProjectExtras(project);
 
+    const badgeMap: Record<string, { label: string; color: string }> = {
+        isTranslation: { label: "Translation", color: "gray" },
+        isEditing: { label: "Edition", color: "purple" },
+        isCertificate: { label: "Certification", color: "blue" },
+        isBittext: { label: "Bittext", color: "green" },
+        isGlossary: { label: "Glossary", color: "red" },
+        isStyleSheet: { label: "StyleSheet", color: "orange" },
+        isMemory: { label: "Memory", color: "yellow" },
+    };
+
     return (
         <Center>
             <Table variant='simple' size='sm' mt='5'>
@@ -49,9 +59,22 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                     <Tr>
                         <Td maxW='35%' w={'35%'}><Text fontWeight={'bold'}>Service Requested: </Text></Td>
                         <Td>
-                            {project.data.isTranslation && <Badge mr={3} px={2} colorScheme='gray'>Translation</Badge>}
+                            {Object.entries(project.data).map(([key, value]) =>
+                                value && badgeMap[key] ? (
+                                    <Badge
+                                        key={key}
+                                        mr={3}
+                                        mt={2}
+                                        px={2}
+                                        colorScheme={badgeMap[key].color}
+                                    >
+                                        {badgeMap[key].label}
+                                    </Badge>
+                                ) : null
+                            )}
+                            {/* {project.data.isTranslation && <Badge mr={3} px={2} colorScheme='gray'>Translation</Badge>}
                             {project.data.isEditing && <Badge mr={3} colorScheme='purple' px={2}>Edition</Badge>}
-                            {project.data.isCertificate && <Badge colorScheme='blue' px={2}>Certification</Badge>}
+                            {project.data.isCertificate && <Badge colorScheme='blue' px={2}>Certification</Badge>} */}
                         </Td>
                     </Tr>
                     <Tr>
@@ -161,20 +184,21 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
 
                         </>
                     ) : null}
-                    {project?.data?.comments !== '' ? <>
-                        <Tr>
-                            <Td borderWidth={0}
-                                colSpan={currentUser?.role !== ROLES.Admin ? 2 : 1}
-                            ><Text py={2} fontWeight={'bold'}>Translator Comments:</Text>
-                                {currentUser?.role !== ROLES.Admin ?
-                                    <Box background={'yellow.100'} color={'yellow.900'} w={'100%'} p={3} borderRadius={3}>
-                                        <Text >{project?.data?.comments}</Text>
-                                    </Box> :
-                                    null}
-                            </Td>
-                            {currentUser?.role === ROLES.Admin ? (
-                                <Td borderWidth={0}>
 
+                    <Tr>
+                        <Td borderWidth={0}
+                            colSpan={2}
+                        >
+                            <Text py={2} fontWeight={'bold'} w="100%">Comments:</Text>
+                            {currentUser?.role !== ROLES.Admin && project?.data?.comments ?
+                                <Box background={'yellow.100'} color={'yellow.900'} w={'100%'} p={3} borderRadius={3}>
+                                    <Text >{project?.data?.comments}</Text>
+                                </Box> :
+                                null}
+
+                            {currentUser?.role === ROLES.Admin || currentUser?.role === ROLES.Translator ? (
+
+                                <>
                                     <FormControl id="comments_info">
                                         <Textarea
                                             name="comments"
@@ -197,10 +221,12 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ project }) => {
                                             <Spinner size='xs' color="orange.500" />
                                             <Text ml={1} color={'orange.500'}>Saving</Text></Flex>}
                                     </Box>
-                                </Td>
+                                </>
                             ) : null}
-                        </Tr>
-                    </> : null}
+                        </Td>
+
+                    </Tr>
+
 
                 </Tbody>
             </Table>

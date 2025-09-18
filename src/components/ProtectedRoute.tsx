@@ -2,14 +2,13 @@ import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useStore } from "../hooks/useGlobalStore";
 
 interface ProtectedRouteProps {
-    allowedRoles?: string;
+    allowedRoles?: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     const location = useLocation();
     const { currentUser } = useStore()
-
-    return currentUser && allowedRoles === currentUser.role
+    return currentUser && allowedRoles?.includes(currentUser.role)
         ? <Outlet />
         : currentUser?.uid
             ? <Navigate to="/unauthorized" state={{ from: location }} replace />

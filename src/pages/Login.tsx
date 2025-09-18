@@ -10,6 +10,7 @@ import useMounted from '../hooks/useMounted';
 import Loading from '../components/Loading';
 import { useStore } from '../hooks/useGlobalStore';
 import Logo from '../assets/logo.png';
+import usePreviousRoute from '../hooks/usePreviousRoute';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -23,6 +24,24 @@ const Login: React.FC = () => {
 
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
     const { currentUser } = useStore();
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    const { getPreviousRoute, clearPreviousRoute } = usePreviousRoute();
+
+    // useEffect(() => {
+    //     const seed = async () => {
+    //         try {
+    //             const functions = getFunctions();
+    //             const setClaim = httpsCallable(functions, "seedAdminClaim");
+    //             const result: any = await setClaim({});
+    //             console.log("🌱 Seed result:", result.data);
+    //         } catch (err) {
+    //             console.error("Error seeding admin claim:", err);
+    //         }
+    //     };
+
+    //     seed();
+    // }, []);
 
     useEffect(() => {
         goToPage();
@@ -33,9 +52,17 @@ const Login: React.FC = () => {
         goToPage();
     }, [currentUser])
 
-    const goToPage = ()=>{
+    const goToPage = () => {
         if (currentUser?.uid && currentUser?.role) {
-            navigate(`/${currentUser?.role}/`, { replace: false })
+            const lastRoute = getPreviousRoute() || `/${currentUser?.role}/`;
+            navigate(lastRoute, { replace: false })
+        } else {
+            if (!currentUser.uid) {
+                setTimeout(() => {
+                    setIsLoading(false);
+                    clearPreviousRoute();
+                }, 1000);
+            }
         }
     }
 
@@ -69,83 +96,80 @@ const Login: React.FC = () => {
         })
     }
 
+    if (isSubmitting || isLoading) return <Loading />
+
     return (
         <>
-            {
-                isSubmitting ? (
-                    <Loading />
-                ) : !currentUser.uid ? (
-                    <Box mb={16} h={'80vh'}>
-                        <Container centerContent maxWidth={'440px'} w={'100%'} h={'100%'} >
-                            <Card mx='auto' my={'auto'} >
+            {!currentUser.uid ? (
+                <Box mb={16} h={'80vh'}>
+                    <Container centerContent maxWidth={'440px'} w={'100%'} h={'100%'} >
+                        <Card mx='auto' my={'auto'} >
 
-                                <Container centerContent pt={'10px'} pb={'30px'} >
-                                    <Image src={Logo} minW="300px" />
-                                </Container>
+                            <Container centerContent pt={'10px'} pb={'30px'} >
+                                <Image src={Logo} minW="300px" />
+                            </Container>
 
-                                <chakra.form
-                                    onSubmit={submit}
-                                >
-                                    <Stack spacing='6'>
-                                        <FormControl id='email'>
-                                            <FormLabel>Email address</FormLabel>
-                                            <Input
-                                                name='email'
-                                                type='email'
-                                                autoComplete='email'
-                                                required
-                                                value={email}
-                                                onChange={e => setEmail(e.target.value)}
-                                            />
-                                        </FormControl>
-                                        <FormControl id='password'>
-                                            <FormLabel>Password</FormLabel>
-                                            <Input
-                                                name='password'
-                                                type='password'
-                                                autoComplete='password'
-                                                value={password}
-                                                required
-                                                onChange={e => setPassword(e.target.value)}
-                                            />
-                                        </FormControl>
-                                        {/* <PasswordField /> */}
-                                        <Button
-                                            type='submit'
-                                            colorScheme='blue'
-                                            bg='blue.700'
-                                            size='lg'
-                                            fontSize='md'
-                                            isLoading={isSubmitting}
-                                        >
-                                            Sign in
-                                        </Button>
-                                    </Stack>
-                                </chakra.form>
-                                <HStack justifyContent='space-between' my={4}>
-                                    <Button variant='link'>
-                                        <Link to='/forgot-password'>Forgot password?</Link>
+                            <chakra.form
+                                onSubmit={submit}
+                            >
+                                <Stack spacing='6'>
+                                    <FormControl id='email'>
+                                        <FormLabel>Email address</FormLabel>
+                                        <Input
+                                            name='email'
+                                            type='email'
+                                            autoComplete='email'
+                                            required
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                        />
+                                    </FormControl>
+                                    <FormControl id='password'>
+                                        <FormLabel>Password</FormLabel>
+                                        <Input
+                                            name='password'
+                                            type='password'
+                                            autoComplete='password'
+                                            value={password}
+                                            required
+                                            onChange={e => setPassword(e.target.value)}
+                                        />
+                                    </FormControl>
+                                    {/* <PasswordField /> */}
+                                    <Button
+                                        type='submit'
+                                        colorScheme='blue'
+                                        bg='blue.700'
+                                        size='lg'
+                                        fontSize='md'
+                                        isLoading={isSubmitting}
+                                    >
+                                        Sign in
                                     </Button>
-                                    <Button variant='link' onClick={() => navigate('/register')}>
-                                        Register
-                                    </Button>
-                                </HStack>
-                                <DividerWithText my={6}>OR</DividerWithText>
-                                <Button
-                                    variant='outline'
-                                    width='100%'
-                                    colorScheme='red'
-                                    leftIcon={<FaGoogle />}
-                                    onClick={loginWithGoogle}
-                                >
-                                    Sign in with Google
+                                </Stack>
+                            </chakra.form>
+                            <HStack justifyContent='space-between' my={4}>
+                                <Button variant='link'>
+                                    <Link to='/forgot-password'>Forgot password?</Link>
                                 </Button>
-                            </Card>
-                        </Container>
-                    </Box>
-                ) : (<>
-
-                </>)
+                                <Button variant='link' onClick={() => navigate('/register')}>
+                                    Register
+                                </Button>
+                            </HStack>
+                            <DividerWithText my={6}>OR</DividerWithText>
+                            <Button
+                                variant='outline'
+                                width='100%'
+                                colorScheme='red'
+                                leftIcon={<FaGoogle />}
+                                onClick={loginWithGoogle}
+                            >
+                                Sign in with Google
+                            </Button>
+                        </Card>
+                    </Container>
+                </Box>
+            ) : null
             }
         </>)
 };
