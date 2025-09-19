@@ -40,7 +40,7 @@ Debes crear los archivos de entorno en la raíz del proyecto:
 - `.env.development` → para entorno de desarrollo (dev)
 - `.env.production` → para entorno de producción
 
-Ejemplo de contenido:
+Ejemplo de contenido de `.env.development`:
 
 ```env
 VITE_API_KEY=AIzaSyXXXXXXX
