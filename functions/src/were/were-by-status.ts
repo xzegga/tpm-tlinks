@@ -34,6 +34,13 @@ const getWereByStatus = async (
         value: 0,
       });
       break;
+    case 'In Progress':
+      whereClause.push({
+        field: 'status',
+        operator: 'in',
+        value: [status, 'Delivered'],
+      });
+      break;
     default:
       whereClause.push({
         field: 'status',

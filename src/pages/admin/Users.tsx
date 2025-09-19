@@ -16,8 +16,10 @@ const initialUser = {
     email: '',
     password: '',
     tenant: '',
-    role: ROLES.Client,
-    department: ''
+    role: ROLES.Unauthorized,
+    department: '',
+    name: '',
+    code: '',
 }
 
 const Users: React.FC = () => {
@@ -34,7 +36,9 @@ const Users: React.FC = () => {
         password: string,
         tenant?: string,
         role?: string,
-        department?: string
+        department?: string,
+        name?: string,
+        code?: string
     }>(initialUser);
 
     useEffect(() => {
@@ -181,7 +185,7 @@ const Users: React.FC = () => {
                     <FormControl id="email" flex={2} isInvalid={newUser?.email === ''}>
                         <Flex alignItems={'center'}>
                             <FormLabel>Email</FormLabel>
-                            {!newUser?.email && <FormErrorMessage mt={0} mb={2}>(* Required)</FormErrorMessage>}
+                            {!newUser?.email && <FormErrorMessage mt={0} mb={2} fontSize={'xs'}>(* Required)</FormErrorMessage>}
                         </Flex>
                         <InputGroup borderColor="#E0E1E7" display={'flex'} flexDirection={'column'}>
                             <Input placeholder=""
@@ -194,7 +198,7 @@ const Users: React.FC = () => {
                     <FormControl id="password" flex={2} isInvalid={newUser?.password === ''}>
                         <Flex alignItems={'center'}>
                             <FormLabel>Password</FormLabel>
-                            {!newUser?.password && <FormErrorMessage mt={0} mb={2}>(* Required)</FormErrorMessage>}
+                            {!newUser?.password && <FormErrorMessage mt={0} mb={2} fontSize={'xs'}>(* Required)</FormErrorMessage>}
                         </Flex>
                         <InputGroup borderColor="#E0E1E7" display={'flex'} flexDirection={'column'}>
                             <Input placeholder=""
@@ -204,6 +208,35 @@ const Users: React.FC = () => {
 
                         </InputGroup>
                     </FormControl>
+                    <FormControl id="name" flex={2}>
+                        <FormLabel>Name</FormLabel>
+                        <Input
+                            name="name"
+                            value={newUser.name}
+                            onChange={handleNewUser}
+                            placeholder="Name"
+                        />
+                    </FormControl>
+                    <FormControl id='role' flex={2}>
+                        <FormLabel>Role</FormLabel>
+                        <Select name="role" value={newUser.role} onChange={handleNewUser} defaultValue={ROLES.Unauthorized}>
+                            <option value={ROLES.Unauthorized}>Unauthorized</option>
+                            <option value={ROLES.Admin}>Admin</option>
+                            <option value={ROLES.Client}>Client</option>
+                            <option value={ROLES.Translator}>Translator</option>
+                        </Select>
+                    </FormControl>
+                    {newUser.role === ROLES.Translator && (
+                        <FormControl id="code" flex={1}>
+                            <FormLabel>Code</FormLabel>
+                            <Input
+                                name="code"
+                                value={newUser.code}
+                                onChange={handleNewUser}
+                                placeholder="Code"
+                            />
+                        </FormControl>
+                    )}
                     <FormControl id="tenant" flex={3} isRequired={newUser?.tenant === ''}>
                         <FormLabel>Client</FormLabel>
                         <InputGroup borderColor="#E0E1E7" display={'flex'} flexDirection={'column'}>
@@ -285,6 +318,7 @@ const Users: React.FC = () => {
                                 <Th>Name</Th>
                                 <Th>Email</Th>
                                 <Th>Roles</Th>
+                                <Th>Code</Th>
                                 <Th>Client</Th>
                                 <Th>Departments</Th>
                                 <Th>Actions</Th>
@@ -318,6 +352,9 @@ const Users: React.FC = () => {
                                             <option value={ROLES.Translator}>Translator</option>
                                             <option value={ROLES.Unauthorized}>Unauthorized</option>
                                         </Select>
+                                    </Td>
+                                    <Td>
+                                        {user.data?.role === ROLES.Translator ? user.data?.code || 'N/A' : 'N/A'}
                                     </Td>
                                     <Td minW={'100px'} px={1.5} py={0.5}>
                                         <TenantDropdown

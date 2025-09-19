@@ -17,7 +17,7 @@ export async function saveUserData(
   request: CallableRequest<any>,
 ): Promise<any> {
   const { token, user } = request.data as any;
-  const { email, role, password, tenant, department } = user;
+  const { email, role, password, tenant, department, name, code } = user;
 
   await validateToken(token);
 
@@ -26,6 +26,7 @@ export async function saveUserData(
       email,
       emailVerified: true,
       password,
+      displayName: name,
       disabled: false,
     });
 
@@ -42,6 +43,8 @@ export async function saveUserData(
       role,
       tenant,
       department,
+      name,
+      code,
     });
 
     return {
@@ -52,6 +55,8 @@ export async function saveUserData(
         tenant,
         department,
         uid: userRecord.uid,
+        name,
+        code,
       },
     };
   } catch (error: any) {
@@ -77,6 +82,8 @@ async function saveUserToDb(
     role: any;
     tenant: any;
     department: any;
+    name: string;
+    code: string;
   },
 ): Promise<any> {
   try {
