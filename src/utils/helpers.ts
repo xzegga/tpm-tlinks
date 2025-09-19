@@ -1,11 +1,20 @@
 import { Timestamp } from 'firebase/firestore';
 
-export const transfromTimestamp = (time: Timestamp) => {
-  const fireBaseTime = new Date(
-    time.seconds * 1000 + time.nanoseconds / 1000000,
-  );
-  const date = new Date(fireBaseTime.toDateString());
-  return date.toLocaleDateString('en-US', {
+export const transfromTimestamp = (time: any) => {
+  if (!time) return '';
+  let dateObj: Date;
+
+  if (time instanceof Timestamp) {
+    dateObj = time.toDate(); // Firestore Timestamp
+  } else if (time.seconds !== undefined) {
+    dateObj = new Date(time.seconds * 1000 + (time.nanoseconds || 0) / 1e6);
+  } else if (time._seconds !== undefined) {
+    dateObj = new Date(time._seconds * 1000 + (time._nanoseconds || 0) / 1e6);
+  } else {
+    dateObj = new Date(time); // cadena ISO o Date
+  }
+
+  return dateObj.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

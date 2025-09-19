@@ -3,11 +3,12 @@ import {
     Tbody, Td, Text, Th, Thead, Tr, FormControl, FormLabel, Input, InputGroup,
     Button,
     useToast,
-    Checkbox
+    Checkbox,
+    Select
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from 'react';
 import { NavLink } from "react-router-dom";
-import { Tenant } from "../../models/clients";
+import { Tenant, TRS_ENABLED } from "../../models/clients";
 import { useDropzone } from "react-dropzone";
 import { AiOutlineCloudUpload, AiOutlineEdit } from "react-icons/ai";
 import { useStore } from "../../hooks/useGlobalStore";
@@ -23,11 +24,24 @@ const Tenants: React.FC = () => {
     const [departments, setDepartments] = useState<string>('');
     const [code, setCode] = useState<string>('');
     const [checked, setChecked] = useState<boolean>();
-    const [checkedT, setCheckedT] = useState<boolean>();
     const [file, setFile] = useState<File | null>(null);
     const { currentUser, setState, loading } = useStore();
     const [images, setImages] = useState<Record<string, string | null>>({});
     const toast = useToast()
+
+    const [translatorSetting, setTranslatorSetting] = useState<keyof typeof TRS_ENABLED>(TRS_ENABLED.Disabled);
+
+    const handleTranslatorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value as keyof typeof TRS_ENABLED;
+        setTranslatorSetting(value);
+        setTenant({ ...tenant, translators: value } as Tenant);
+    };
+
+    useEffect(() => {
+        if (tenant) {
+            setTranslatorSetting(tenant.translators ?? TRS_ENABLED.Disabled);
+        }
+    }, [tenant]);
 
     const {
         getRootProps,
@@ -91,18 +105,6 @@ const Tenants: React.FC = () => {
         setChecked(checked)
     }
 
-    const setTranslator = (chk: boolean) => {
-        setTenant({
-            ...tenant,
-            translators: chk,
-        } as Tenant);
-        console.log({
-            ...tenant,
-            translators: chk,
-        })
-        setCheckedT(checkedT)
-    }
-
     const saveRequest = async () => {
         if (!tenant?.name || !tenant?.code) {
             toast({
@@ -124,7 +126,6 @@ const Tenants: React.FC = () => {
                 const index = newTenants.findIndex(item => item.id === tenant.id)
 
                 const expt = tenant.export ? true : false;
-                const trs = tenant.translators ? true : false;
                 if (index !== -1) {
                     newTenants[index] = {
                         ...newTenants[index],
@@ -132,7 +133,7 @@ const Tenants: React.FC = () => {
                         departments: tenant.departments,
                         code: tenant.code,
                         export: expt,
-                        translators: trs,
+                        translators: tenant.translators ?? TRS_ENABLED.Disabled,
                         ...(file && { image: `/ClientLogos/${file?.name}` })
                     }
                     setTenants(newTenants)
@@ -202,6 +203,14 @@ const Tenants: React.FC = () => {
                                 <Input placeholder="" name="departments" id="name" value={departments || ''} onChange={handleInputDep} />
                             </InputGroup>
                         </FormControl>
+                        <FormControl id="translators" flex={2}>
+                            <FormLabel>Enable Translators</FormLabel>
+                            <Select value={translatorSetting} onChange={handleTranslatorChange} maxW={200}>
+                                <option value={TRS_ENABLED.Disabled}>Disabled</option>
+                                <option value={TRS_ENABLED.Admin}>Only Admin</option>
+                                <option value={TRS_ENABLED.Client}>Admin and Client</option>
+                            </Select>
+                        </FormControl>
                         <FormControl id="code" flex={1}>
                             <FormLabel>Code</FormLabel>
                             <InputGroup borderColor="#E0E1E7">
@@ -231,21 +240,13 @@ const Tenants: React.FC = () => {
                             </InputGroup>
                         </FormControl>
                     </Flex>
-                    <Flex mt={2} alignContent={'flex-start'}>
+                    <Flex mt={2} alignContent={'flex-start'} alignItems={'center'}>
                         <FormControl id="code" maxW={200} mr={10}>
                             <InputGroup borderColor="#E0E1E7" h={10} >
                                 <Checkbox
                                     isChecked={tenant?.export}
                                     onChange={(e) => setCheckedItems(e.target.checked)}
                                 >Export billing report</Checkbox>
-                            </InputGroup>
-                        </FormControl>
-                        <FormControl id="code">
-                            <InputGroup borderColor="#E0E1E7" h={10} >
-                                <Checkbox
-                                    isChecked={tenant?.translators || false}
-                                    onChange={(e) => setTranslator(e.target.checked)}
-                                >Enable Client Translators</Checkbox>
                             </InputGroup>
                         </FormControl>
                     </Flex>

@@ -1,5 +1,6 @@
 import { doc, setDoc } from 'firebase/firestore';
 import { Dispatch, useRef, useState } from 'react';
+import { TRS_ENABLED } from '../models/clients';
 
 import {
     AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader,
@@ -33,12 +34,16 @@ export default function ChangeStatusSelector({ project, onSuccess, ids, setProje
     const { validate } = useAuth();
     const onClose = () => setIsOpen(false)
     const cancelRef = useRef(null)
+
+    const canSeeTranslators =
+        tenant?.translators === TRS_ENABLED.Client ||
+        (tenant?.translators === TRS_ENABLED.Admin && role === ROLES.Admin);
+
     const statusAvailable =
         role === ROLES.Admin
-            ? tenant?.translators
-                ? adminStatuses
-                : adminStatusesWithNoTranslators
+            ? (canSeeTranslators ? adminStatuses : adminStatusesWithNoTranslators)
             : translatorStatuses;
+
     const [status, setStatus] = useState<string>(ids?.length ? statusAvailable[0] : project?.data?.status || '')
     const toast = useToast()
 

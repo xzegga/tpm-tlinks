@@ -25,6 +25,7 @@ interface ProjectRowProps {
     project: ProjectObject;
     removeProject: (project: ProjectObject) => void;
     translators?: any[];
+    canSeeTranslators: boolean;
 }
 
 const stripped = {
@@ -32,7 +33,7 @@ const stripped = {
     backgroundSize: '58.74px 70.01px'
 };
 
-const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, translators }) => {
+const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, translators, canSeeTranslators }) => {
     const navigate = useNavigate();
     const { status, loading: projectLoading, currentUser, selectedIds, projectTranslators, setState, tenant } = useStore();
     const toast = useToast()
@@ -45,6 +46,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
         dbHandleBilledChange,
         dbHandleWordCountChange
     } = useProjectExtras(project);
+
 
     const badgeConfig = [
         { key: 'isTranslation', label: 'T', color: 'gray' },
@@ -250,7 +252,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
             >
                 {project.data.status && <Status status={project.data.status} />}
             </LinkBox>
-            {tenant.translators && currentUser?.role !== ROLES.Translator ? <>
+            {canSeeTranslators && currentUser?.role !== ROLES.Translator ? <>
                 {project.data.status === 'Received' ? <>
                     <Td px={1.5} py={0.5}>
                         <FormControl id="wordCount_number">

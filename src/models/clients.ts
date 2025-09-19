@@ -1,5 +1,11 @@
 import { Timestamp } from 'firebase/firestore';
 
+export const TRS_ENABLED = {
+  Disabled: 'Disabled',
+  Admin: 'Admin',
+  Client: 'Client',
+} as const;
+
 export type Tenant = {
   id?: string;
   name: string;
@@ -9,5 +15,5 @@ export type Tenant = {
   created?: Timestamp;
   image: string;
   export: boolean;
-  translators: boolean;
+  translators: keyof typeof TRS_ENABLED;
 };

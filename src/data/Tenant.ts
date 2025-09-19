@@ -9,7 +9,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { Tenant } from '../models/clients';
+import { Tenant, TRS_ENABLED } from '../models/clients';
 import { db, storage } from '../utils/init-firebase';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -85,7 +85,7 @@ export const getTenantBySlug = async (slug: string): Promise<Tenant | null> => {
       code: tenantData.code,
       image: tenantData.image || '',
       export: tenantData.export || false,
-      translators: tenantData.translators || false,
+      translators: tenantData.translators || TRS_ENABLED.Disabled,
     } as Tenant;
   } catch (error) {
     console.error('Error fetching tenant:', error);
@@ -117,7 +117,7 @@ export async function updateTenant(tenant: Tenant, file?: File | null) {
       departments: tenant.departments,
       code: tenant.code,
       export: tenant.export || false,
-      translators: tenant.translators || false,
+      translators: tenant.translators ?? TRS_ENABLED.Disabled,
     };
 
     // Optionally update image if a new file is provided

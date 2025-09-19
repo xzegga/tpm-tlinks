@@ -8,6 +8,7 @@ import { ROLES } from '../../models/users';
 import ProjectRow from './ProjectRow';
 import { useAuth } from '../../context/AuthContext';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { TRS_ENABLED } from '../../models/clients';
 
 interface ProjectListTableProps {
     projects: ProjectObject[];
@@ -22,6 +23,11 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
     const [translators, setTranslators] = useState([]);
     const [urgentProjects, setUrgentProjects] = useState<ProjectObject[]>([]);
     const [commonProjects, setCommonProjects] = useState<ProjectObject[]>([]);
+
+    const canSeeTranslators =
+        tenant?.translators === TRS_ENABLED.Client ||
+        (tenant?.translators === TRS_ENABLED.Admin &&
+            currentUser?.role === ROLES.Admin);
 
     useEffect(() => {
         setUrgentProjects(
@@ -93,8 +99,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
 
-                                {currentUser.role !== ROLES.Translator &&
-                                    tenant?.translators &&
+                                {canSeeTranslators &&
                                     <Th px={1} textAlign={'center'}>Translator</Th>}
                                 {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
@@ -125,7 +130,7 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <Th px={1} textAlign={'center'}>Target</Th>
                                 <Th px={1} textAlign={'center'}>TimeLine</Th>
                                 <Th px={1} textAlign={'center'}>Status</Th>
-                                {currentUser.role !== ROLES.Translator && tenant.translators && <Th px={1} textAlign={'center'}>Translator</Th>}
+                                {canSeeTranslators && <Th px={1} textAlign={'center'}>Translator</Th>}
                                 {currentUser?.role === ROLES.Admin || (status === 'Quoted' && !loading) ? <>
                                     <Th px={1} textAlign={'right'}>Count</Th>
                                     <Th px={1} textAlign={'right'}>Cost</Th>
@@ -139,7 +144,8 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                     key={project.id}
                                     project={project}
                                     removeProject={removeProject}
-                                    translators={translators} />
+                                    translators={translators}
+                                    canSeeTranslators={canSeeTranslators} />
                             ))}
                             {projects.length === 0 ?
                                 <Tr>

@@ -22,6 +22,7 @@ import { generateYears } from '../../utils/helpers';
 import { allStatuses, allStatusesWitNoTranslators, monthNames } from '../../utils/value-objects';
 import { useAuth } from '../../context/AuthContext';
 import ChangeStatusSelector from '../../components/ChangeStatus';
+import { TRS_ENABLED } from '../models/clients';
 
 const months = [
     "January", "February", "March", "April", "May", "June",
@@ -55,7 +56,13 @@ const Dashboard: React.FC = () => {
     const [count, setCount] = useState<number>()
     const [isOpen, setIsOpen] = useState(false);
 
-    const statuses = tenant?.translators ? allStatuses : allStatusesWitNoTranslators;
+    const statuses =
+        (currentUser?.role === ROLES.Admin &&
+            tenant?.translators !== TRS_ENABLED.Disabled) ||
+            (currentUser?.role === ROLES.Client &&
+                tenant?.translators === TRS_ENABLED.Client)
+            ? allStatuses
+            : allStatusesWitNoTranslators;
 
     const onClose = () => setIsOpen(false);
 
