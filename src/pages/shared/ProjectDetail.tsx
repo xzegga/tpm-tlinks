@@ -23,6 +23,7 @@ import { ROLES } from '../../models/users';
 import { useStore } from '../../hooks/useGlobalStore';
 import ChangeStatusSelector from '../../components/ChangeStatus';
 import { useDocResult } from '../../hooks/useDocResult';
+import { TRS_ENABLED } from '../../models/clients';
 
 export const DocumentType = {
     Certificate: 'Certificate',
@@ -49,8 +50,28 @@ const ProjectDetail: React.FC = () => {
     const [documents, setDocuments] = React.useState<DocumentObject[]>([]);
     const [processedDocuments, setProcessedDocuments] = React.useState<ProcessedDocument[]>([])
     const [docs, setDocs] = React.useState<DocumentsWithType[]>([]);
-
     const { getDocTypeInfo } = useDocResult();
+
+    const canSeeTranslators =
+        tenant?.translators === TRS_ENABLED.Client ||
+        (tenant?.translators === TRS_ENABLED.Admin &&
+            currentUser?.role === ROLES.Admin);
+
+    const [displayStatus, setDisplayStatus] = React.useState<string>('');
+
+    const shouldMaskStatus = !canSeeTranslators && currentUser?.role !== ROLES.Translator;
+
+
+    useEffect(() => {
+        if (project) {
+            const ds =
+                shouldMaskStatus && ['Assigned', 'Delivered'].includes(project.data.status)
+                    ? 'In Progress'
+                    : project.data.status;
+            setDisplayStatus(ds);
+        }
+    }, [project])
+
     useEffect(() => {
         if (documents.length) {
 
@@ -307,7 +328,7 @@ const ProjectDetail: React.FC = () => {
                                         project={project} role={currentUser.role}
                                         tenant={tenant} />
                                 )}
-                                {project.data.status && currentUser?.role === ROLES.Client && <Status status={project.data.status} />}
+                                {project.data.status && currentUser?.role === ROLES.Client && <Status status={displayStatus} />}
                             </Flex>
                             <ProjectTable project={project}></ProjectTable>
 

@@ -58,7 +58,7 @@ export const billingStatuses = [
 export const translatorStatuses = [
   STATUS.Assigned,
   STATUS.InProgress,
-  STATUS.Completed,
+  STATUS.Delivered,
 ];
 export const adminStatuses = [
   STATUS.Received,

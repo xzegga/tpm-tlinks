@@ -113,7 +113,8 @@ const ProjectListTable: React.FC<ProjectListTableProps> = ({ projects, removePro
                                 <ProjectRow key={project.id}
                                     project={project}
                                     removeProject={removeProject}
-                                    translators={translators} />
+                                    translators={translators}
+                                    canSeeTranslators={canSeeTranslators} />
                             ))}
                         </Tbody>
                     </Table >

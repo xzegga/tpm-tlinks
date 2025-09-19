@@ -22,5 +22,6 @@ export const defaultStatuses = [
   'Assigned',
   'In Progress',
   'On Hold',
+  'Delivered',
 ];
 export const billingStatuses = ['In Progress', 'Completed', 'Archived'];

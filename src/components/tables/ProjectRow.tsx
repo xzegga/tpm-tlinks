@@ -35,7 +35,7 @@ const stripped = {
 
 const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, translators, canSeeTranslators }) => {
     const navigate = useNavigate();
-    const { status, loading: projectLoading, currentUser, selectedIds, projectTranslators, setState, tenant } = useStore();
+    const { status, loading: projectLoading, currentUser, selectedIds, projectTranslators, setState } = useStore();
     const toast = useToast()
     const {
         loading,
@@ -47,6 +47,11 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
         dbHandleWordCountChange
     } = useProjectExtras(project);
 
+    const shouldMaskStatus = !canSeeTranslators && currentUser?.role !== ROLES.Translator;
+    const displayStatus =
+        shouldMaskStatus && ['Assigned', 'Delivered'].includes(project.data.status)
+            ? 'In Progress'
+            : project.data.status;
 
     const badgeConfig = [
         { key: 'isTranslation', label: 'T', color: 'gray' },
@@ -250,7 +255,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({ project, removeProject, transla
                 cursor={'pointer'}
                 _hover={{ bg: 'gray.100' }}
             >
-                {project.data.status && <Status status={project.data.status} />}
+                {project.data.status && <Status status={displayStatus} />}
             </LinkBox>
             {canSeeTranslators && currentUser?.role !== ROLES.Translator ? <>
                 {project.data.status === 'Received' ? <>
