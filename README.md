@@ -44,9 +44,9 @@ Ejemplo de contenido:
 
 ```env
 VITE_API_KEY=AIzaSyXXXXXXX
-VITE_AUTH_DOMAIN=tpm-tlinks-dev.firebaseapp.com
-VITE_PROJECT_ID=tpm-tlinks-dev
-VITE_STORAGE_BUCKET=tpm-tlinks-dev.appspot.com
+VITE_AUTH_DOMAIN=project-id.firebaseapp.com
+VITE_PROJECT_ID=project-id
+VITE_STORAGE_BUCKET=project-id.appspot.com
 VITE_MESSAGING_SENDER_ID=1234567890
 VITE_APP_ID=1:1234567890:web:abcdef123456
 ```
