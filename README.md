@@ -1,30 +1,168 @@
-# React + TypeScript + Vite
+# TPM-Tlinks – Administrador de Proyectos de Traducción
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este proyecto es un **Administrador de Proyectos de Traducción** desarrollado sobre **Firebase** (Hosting, Firestore y Functions) con frontend en **Vite/React** y backend en **Firebase Functions (TypeScript)**.  
+El objetivo principal es gestionar proyectos de traducción, sus estados, usuarios y flujos de trabajo de forma eficiente.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Instalación de dependencias
 
-## Expanding the ESLint configuration
+Puedes instalar dependencias de dos formas:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### Opción rápida con script
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```bash
+npm run installdev
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Este script ejecuta:
+
+- `npm i` en el proyecto raíz
+- `npm i` dentro de la carpeta `functions`
+- instala globalmente `firebase-tools`
+
+### Opción manual
+
+```bash
+npm install
+cd functions
+npm install
+npm install -g firebase-tools
+```
+
+---
+
+## ⚙️ Variables de entorno
+
+Debes crear los archivos de entorno en la raíz del proyecto:
+
+- `.env.local` → para desarrollo local con emuladores
+- `.env.development` → para entorno de desarrollo (dev)
+- `.env.production` → para entorno de producción
+
+Ejemplo de contenido:
+
+```env
+VITE_API_KEY=AIzaSyXXXXXXX
+VITE_AUTH_DOMAIN=tpm-tlinks-dev.firebaseapp.com
+VITE_PROJECT_ID=tpm-tlinks-dev
+VITE_STORAGE_BUCKET=tpm-tlinks-dev.appspot.com
+VITE_MESSAGING_SENDER_ID=1234567890
+VITE_APP_ID=1:1234567890:web:abcdef123456
+```
+
+_(para producción reemplaza con los valores del proyecto prod)_
+
+---
+
+## 🔑 Configuración de Firebase Functions
+
+Las Functions **no leen archivos `.env`**, sino que usan configuración propia de Firebase.
+
+### Para Dev
+
+```bash
+firebase functions:config:set app.key="xxxxx" --project tpm-tlinks-dev
+```
+
+### Para Producción
+
+```bash
+firebase functions:config:set app.key="yyyyy" --project tpm-tlinks
+```
+
+Puedes verificar lo guardado con:
+
+```bash
+firebase functions:config:get --project tpm-tlinks-dev
+firebase functions:config:get --project tpm-tlinks
+```
+
+---
+
+## 🖥️ Trabajo en local
+
+1. Instalar dependencias:
+   ```bash
+   npm run installdev
+   ```
+2. Crear un archivo `.env.local` con las credenciales del proyecto de desarrollo.
+3. Levantar los emuladores de Firebase:
+   ```bash
+   firebase emulators:start
+   ```
+4. Correr el frontend en paralelo:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 📦 Deploy
+
+### Deploy solo frontend (Hosting)
+
+#### Dev
+
+```bash
+npm run build:dev
+firebase use dev
+firebase deploy --only hosting
+```
+
+#### Producción
+
+```bash
+npm run build
+firebase use default
+firebase deploy --only hosting
+```
+
+---
+
+### Deploy Functions
+
+#### Dev
+
+```bash
+firebase use dev
+npm run build:functions   # si defines un script para compilar las functions con tsc
+firebase deploy --only functions
+```
+
+#### Producción
+
+```bash
+firebase use default
+npm run build:functions
+firebase deploy --only functions
+```
+
+---
+
+### Deploy completo (App + Functions)
+
+#### Dev
+
+```bash
+npm run build:dev
+firebase use dev
+firebase deploy
+```
+
+#### Producción
+
+```bash
+npm run build
+firebase use default
+firebase deploy
+```
+
+---
+
+## 📌 Notas finales
+
+- El archivo `firestore.indexes.json` en la raíz define los índices requeridos por Firestore.
+- Usa `firebase deploy --only firestore:indexes` **solo en dev** para crear/actualizar los índices.
+- En prod ya están creados y no es necesario redeployarlos.
+- Para evitar confusión, usa siempre `firebase use dev` o `firebase use default` antes de desplegar.

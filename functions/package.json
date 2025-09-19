@@ -1,20 +1,4 @@
 {
-  "name": "functions",
-  "scripts": {
-    "lint": "eslint --ext .js,.ts .",
-    "build": "tsc",
-    "build:watch": "tsc --watch",
-    "serve": "npm run build && firebase emulators:start --only functions",
-    "shell": "npm run build && firebase functions:shell",
-    "start": "npm run shell",
-    "emulators": "rm -r lib && npm run build && firebase emulators:start",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
-  },
-  "engines": {
-    "node": "18"
-  },
-  "main": "lib/index.js",
   "dependencies": {
     "@types/node": "^20.12.2",
     "date-fns": "^3.6.0",
@@ -30,5 +14,21 @@
     "firebase-functions-test": "^3.1.0",
     "typescript": "^5.4.3"
   },
-  "private": true
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "name": "functions",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "deploy": "firebase deploy --only functions",
+    "emulators": "rm -r lib && npm run build && firebase emulators:start",
+    "lint": "eslint --ext .js,.ts .",
+    "logs": "firebase functions:log",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell"
+  }
 }

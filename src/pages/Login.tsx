@@ -12,6 +12,7 @@ import { useStore } from '../hooks/useGlobalStore';
 import Logo from '../assets/logo.png';
 import usePreviousRoute from '../hooks/usePreviousRoute';
 
+
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const toast = useToast()
@@ -28,25 +29,9 @@ const Login: React.FC = () => {
 
     const { getPreviousRoute, clearPreviousRoute } = usePreviousRoute();
 
-    // useEffect(() => {
-    //     const seed = async () => {
-    //         try {
-    //             const functions = getFunctions();
-    //             const setClaim = httpsCallable(functions, "seedAdminClaim");
-    //             const result: any = await setClaim({});
-    //             console.log("🌱 Seed result:", result.data);
-    //         } catch (err) {
-    //             console.error("Error seeding admin claim:", err);
-    //         }
-    //     };
-
-    //     seed();
-    // }, []);
-
     useEffect(() => {
         goToPage();
     }, [])
-
 
     useEffect(() => {
         goToPage();

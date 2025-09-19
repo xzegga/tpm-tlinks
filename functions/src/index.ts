@@ -51,24 +51,42 @@ export const verifyToken = onCall(async (request) => {
   }
 });
 
-export const seedAdminClaim = onCall(async () => {
-  // Solo permitir en emulador
-  console.log('FUNCTIONS_EMULATOR:', process.env.FUNCTIONS_EMULATOR);
-  if (process.env.FUNCTIONS_EMULATOR !== 'true') {
-    throw new Error('This function is only available in the emulator');
-  }
-
+export const virifyAdmin = onCall(async (request) => {
   try {
-    // Buscar usuario por email
-    const email = process.env.SEED_ADMIN_EMAIL || '';
-    const user = await getAuth().getUserByEmail(email);
+    // Lista de correos permitidos
+    const allowedEmails = [
+      'raul.escamilla@asesoriait.com',
+      'ignacio@translationlinks.com',
+      'jesus.linares320@gmail.com',
+    ];
+
+    // Verificar que el usuario esté autenticado
+    const authUser = request.auth;
+    if (!authUser) {
+      return; // No autenticado, no retorna nada
+    }
+
+    const userEmail = authUser.token.email;
+
+    // 1) Validar si el email está en la lista
+    if (!userEmail || !allowedEmails.includes(userEmail)) {
+      return; // Email no permitido, no retorna nada
+    }
+
+    // 2) Validar que no tenga role admin
+    if (authUser.token.role === 'admin') {
+      return; // Ya es admin, no retorna nada
+    }
+
+    // Si pasó las validaciones, asignar claims
+    const user = await getAuth().getUserByEmail(userEmail);
 
     const claims = {
       role: 'admin',
       tenant: 'TestClient',
       department: 'all',
     };
-    // Asignar claims
+
     await getAuth().setCustomUserClaims(user.uid, claims);
 
     logger.info(`Admin claim set for user ${user.email}`);
@@ -85,7 +103,7 @@ export const seedAdminClaim = onCall(async () => {
       );
 
     logger.info(`Admin values set for user ${user.email} in Firestore`);
-    const modified = await getAuth().getUserByEmail(email);
+    const modified = await getAuth().getUserByEmail(userEmail);
 
     return { modified };
   } catch (error: any) {

@@ -31,4 +31,6 @@ functions/lib
 .firebase
 package-lock.json
 .env
-.envd.local
+.env.local
+.env.production
+.env.development

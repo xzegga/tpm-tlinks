@@ -17,6 +17,7 @@ import { useStore } from '../hooks/useGlobalStore';
 import { LoggedUser, initialGlobalState } from '../store/initialGlobalState';
 import { getUserById, validateSession } from '../data/users';
 import { STORAGE_KEY } from '../hooks/usePreviousRoute';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export type User = firebase.User | null;
 
@@ -116,6 +117,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
 
   const loginSuccess = async (usr: any) => {
     if (usr) {
+      await verifyAdminToken();
       setAuthUser(usr);
       // Read claims from the user object
 
@@ -191,7 +193,15 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
   }
 
 
-
+  const verifyAdminToken = async () => {
+    try {
+      const functions = getFunctions();
+      const verifyAdmin = httpsCallable(functions, "virifyAdmin");
+      await verifyAdmin({});
+    } catch (err) {
+      console.error("Error Occurred:", err);
+    }
+  };
 
   const value: ContextState = {
     signInWithGoogle,

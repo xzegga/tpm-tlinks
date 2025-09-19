@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "tpm-tlinks"
+    "default": "tpm-tlinks",
+    "dev": "tpm-tlinks-dev"
   }
 }
